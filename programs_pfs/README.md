@@ -25,18 +25,20 @@ Point elsewhere via the `PFS_ETC_DIR` environment variable if you relocate it.
 | File | Purpose |
 |---|---|
 | `01_pfs_etc.py` | Reusable wrapper: `run_etc()` runs the ETC; `band_sn()` summarizes continuum S/N within a g/r/i/z/y filter; `band_resolution()` gives R for a pixel binning. Loaded by path (leading digit isn't import-safe). |
-| `plot_time_vs_sn.py` | Driver: continuum S/N vs total exposure time, per band, over a magnitude grid. |
+| `02_plot_time_vs_sn.py` | Driver: continuum S/N vs total exposure time, per band, over a magnitude grid. |
+| `03_snia_radec.py` | Sky positions (RA/Dec) of all HOURGLASS2 Type Ia SNe (two fields), colored by redshift; also writes a positions catalog CSV. |
 | `outputs/png/`, `outputs/csv/` | Generated figures and tables. |
 
 ## Usage
 
 ```bash
 cd ~/github/projects_roman/programs_pfs
-python plot_time_vs_sn.py                       # i-band, linear, default grid
-python plot_time_vs_sn.py --loglog              # log-log version (-> *_loglog.png)
-python plot_time_vs_sn.py --loglog --from-csv   # restyle from cached grid (no ETC re-run)
-python plot_time_vs_sn.py --band z --mags 23 24 25
-python plot_time_vs_sn.py --seeing 0.6 --moon 0.25
+python 02_plot_time_vs_sn.py                       # i-band, linear, default grid
+python 02_plot_time_vs_sn.py --loglog              # log-log version (-> *_loglog.png)
+python 02_plot_time_vs_sn.py --loglog --from-csv   # restyle from cached grid (no ETC re-run)
+python 02_plot_time_vs_sn.py --loglog --from-csv --bin 5   # 5-pixel binning (S/N x sqrt5, R~1840)
+python 02_plot_time_vs_sn.py --band z --mags 23 24 25
+python 03_snia_radec.py                            # SNIa sky positions, both fields
 ```
 
 Curves are color-coded as a **red→blue rainbow from bright (red) to faint (blue)**
