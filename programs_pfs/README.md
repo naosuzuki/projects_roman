@@ -24,7 +24,7 @@ Point elsewhere via the `PFS_ETC_DIR` environment variable if you relocate it.
 
 | File | Purpose |
 |---|---|
-| `pfs_etc.py` | Reusable wrapper: `run_etc()` runs the ETC; `band_sn()` summarizes continuum S/N within a g/r/i/z/y filter. |
+| `01_pfs_etc.py` | Reusable wrapper: `run_etc()` runs the ETC; `band_sn()` summarizes continuum S/N within a g/r/i/z/y filter; `band_resolution()` gives R for a pixel binning. Loaded by path (leading digit isn't import-safe). |
 | `plot_time_vs_sn.py` | Driver: continuum S/N vs total exposure time, per band, over a magnitude grid. |
 | `outputs/png/`, `outputs/csv/` | Generated figures and tables. |
 

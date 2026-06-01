@@ -23,9 +23,17 @@ import os
 import argparse
 import numpy as np
 
-from pfs_etc import run_etc, band_sn, band_resolution, BANDS
-
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+# The ETC wrapper lives in 01_pfs_etc.py; a leading digit isn't a valid module
+# name for `import`, so load it by file path.
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location("pfs_etc", os.path.join(HERE, "01_pfs_etc.py"))
+pfs_etc = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(pfs_etc)
+run_etc, band_sn, band_resolution, BANDS = (
+    pfs_etc.run_etc, pfs_etc.band_sn, pfs_etc.band_resolution, pfs_etc.BANDS)
+
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV_DIR = os.path.join(HERE, "outputs", "csv")
 
