@@ -84,6 +84,18 @@ def main():
                          for m in range(1, 13)])
     mon_tot = np.array([hrs_obs[months == m].sum() for m in range(1, 13)])
 
+    # airmass-quality bins during dark: red 2.0-1.8, green 1.8-1.5, blue <=1.5
+    e18 = 90 - np.degrees(np.arccos(1 / 1.8))      # ~33.7 deg  (airmass 1.8)
+    e15 = 90 - np.degrees(np.arccos(1 / 1.5))      # ~41.8 deg  (airmass 1.5)
+    red_h = ((dark & (talt > alt_lim) & (talt <= e18)) * dt).sum(axis=1)
+    grn_h = ((dark & (talt > e18) & (talt <= e15)) * dt).sum(axis=1)
+    blu_h = ((dark & (talt > e15)) * dt).sum(axis=1)
+
+    def _monthly(arr):
+        return np.array([arr[months == m].mean() if (months == m).any() else 0
+                         for m in range(1, 13)])
+    mon_red, mon_grn, mon_blu = _monthly(red_h), _monthly(grn_h), _monthly(blu_h)
+
     # HST clock for y-axis (monotonic 18->30)
     hst = utc_h - HST_OFFSET
     hst = np.where(hst < 12, hst + 24, hst)
@@ -176,12 +188,12 @@ def main():
     fig2, (axn, axm) = plt.subplots(2, 1, figsize=(13, 8), constrained_layout=True)
 
     axn.fill_between(dnum, hrs_obs, color="#3b7dd8", alpha=0.85,
-                     label=f"visible (elevation > {alt_lim:.0f}$^\\circ$)")
-    axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="astro. dark hours")
-    axn.set_ylabel("visible hours / night", fontsize=LABEL_FS)
-    axn.set_xlabel("date", fontsize=LABEL_FS)
+                     label=f"Visible (elevation $>{alt_lim:.0f}^\\circ$)")
+    axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
+    axn.set_ylabel("Visible hours / night", fontsize=18)
+    axn.set_xlabel("Date", fontsize=18)
     axn.tick_params(labelsize=TICK_FS)
-    axn.legend(fontsize=11, loc="upper right")
+    axn.legend(fontsize=12, loc="lower right")
     axn.grid(True, alpha=0.3)
     axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}  "
                   f"(elevation $>{alt_lim:.0f}^\\circ$)", fontsize=TITLE_FS)
@@ -190,16 +202,20 @@ def main():
     axn.set_xlim(dnum.min(), dnum.max())
 
     x = np.arange(12)
-    axm.bar(x, mon_mean, width=0.62, color="#3b7dd8",
-            label=f"elevation > {alt_lim:.0f}$^\\circ$")
+    axm.bar(x, mon_red, width=0.62, color="#d62728",
+            label="Airmass 2.0-1.8 (elev. 30-34$^\\circ$)")
+    axm.bar(x, mon_grn, width=0.62, bottom=mon_red, color="#2ca02c",
+            label="Airmass 1.8-1.5 (elev. 34-42$^\\circ$)")
+    axm.bar(x, mon_blu, width=0.62, bottom=mon_red + mon_grn, color="#3b7dd8",
+            label="Airmass $\\leq$1.5 (elev. $>$42$^\\circ$)")
     for i in range(12):
-        axm.text(i, mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
-                 va="bottom", fontsize=9, color="0.3")
+        if mon_mean[i] > 0:
+            axm.text(i, mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
+                     va="bottom", fontsize=9, color="0.3")
     axm.set_xticks(x)
     axm.set_xticklabels(MON, fontsize=TICK_FS)
-    axm.set_ylabel("mean visible\nhours / night", fontsize=LABEL_FS)
-    axm.set_xlabel("month  (number above bar = total visible hours that month)",
-                   fontsize=LABEL_FS)
+    axm.set_ylabel("Mean visible hours / night", fontsize=18)
+    axm.set_xlabel("Month  (number above bar = total visible hours)", fontsize=18)
     axm.tick_params(labelsize=TICK_FS)
     axm.legend(fontsize=11, loc="upper right")
     axm.grid(True, axis="y", alpha=0.3)
