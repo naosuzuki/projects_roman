@@ -37,7 +37,10 @@ MODELS = {"Ia": "SNIaMODEL00", "CC": "NONIaMODEL06"}
 
 FOV = 1.3
 R = FOV / 2.0
-FIBERS_AVAIL = 1850          # science fibers/pointing (2394 - ~400 sky - ~150 fluxstd)
+FIBERS_TOTAL = 2394          # PFS science fibers per pointing
+SKY = 400                    # reserved sky fibers (observatory-provided)
+FLUXSTD = 200                # reserved flux-standard fibers
+FIBERS_AVAIL = FIBERS_TOTAL - SKY - FLUXSTD   # = 1794 for program targets
 SN_ZCUT = 24.0
 HOST_ZCUT = 25.0
 SN_TARGET = 5.0              # target host S/N at 10-pix binning
@@ -199,6 +202,9 @@ def main():
     vmjd = np.array([v[0] for v in visits])
     vcfg = [v[1] for v in visits]
 
+    is_Ia = (sn["typ"] == "Ia")
+    snIa = np.zeros((nv, 7), int); snCC = np.zeros((nv, 7), int)
+    hoIa = np.zeros((nv, 7), int); hoCC = np.zeros((nv, 7), int)
     for vi, (mjd, cfg) in enumerate(visits):
         psn = pA_sn if cfg == "A" else pB_sn
         pho = pA_ho if cfg == "A" else pB_ho
@@ -207,13 +213,17 @@ def main():
         faded = mjd > sn["t2"]
         active_ho = faded & host_ok & (~host_done) & (pho >= 0)
         for p in range(7):
-            sn_fib[vi, p] = np.sum(active_sn & (psn == p))
-            ho_fib[vi, p] = np.sum(active_ho & (pho == p))
+            asn = active_sn & (psn == p)
+            aho = active_ho & (pho == p)
+            snIa[vi, p] = np.sum(asn & is_Ia); snCC[vi, p] = np.sum(asn & ~is_Ia)
+            hoIa[vi, p] = np.sum(aho & is_Ia); hoCC[vi, p] = np.sum(aho & ~is_Ia)
         # accumulate host integration for those observed this visit
         obs_now = np.where(active_ho)[0]
         host_obs[obs_now] += 1
         host_done[host_obs >= visits_needed] = True
 
+    sn_fib = snIa + snCC
+    ho_fib = hoIa + hoCC
     tot_fib = sn_fib + ho_fib
     spare = FIBERS_AVAIL - tot_fib
 
@@ -222,7 +232,9 @@ def main():
     completed = host_done
     # a host is "remaining" if it qualifies (Z<25) and not completed by survey end
     remaining = host_ok & (~completed)
-    print(f"\nHosts (Z<25) of program SNe: {int(host_ok.sum())}")
+    print(f"\nfiber budget/pointing: {FIBERS_TOTAL} total = {SKY} sky + {FLUXSTD} FluxStd "
+          f"+ demand + spare  ({FIBERS_AVAIL} available for program)")
+    print(f"Hosts (Z<25) of program SNe: {int(host_ok.sum())}")
     print(f"  completed (reached S/N=5): {int(completed.sum())}")
     print(f"  remaining (incomplete) at 2030-05-31: {int(remaining.sum())}")
     print(f"    of which started but unfinished: {int((remaining & started).sum())}")
@@ -267,27 +279,36 @@ def main():
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 9), sharex=True,
                                    constrained_layout=True)
-    # panel 1: central pointing P0 SN+host stacked, and ring mean
-    ax1.bar(dn, sn_fib[:, 0], width=5, color="#1f77b4", label="P0 SNe")
-    ax1.bar(dn, ho_fib[:, 0], width=5, bottom=sn_fib[:, 0], color="#ff7f0e", label="P0 hosts")
-    ring = tot_fib[:, 1:].mean(axis=1)
-    ax1.plot(*gapped(dn, ring), "k.-", lw=1, ms=4, label="ring mean (P1-P6) total")
-    ax1.set_ylabel("fibers needed / pointing", fontsize=LFS)
+    # panel 1: target-fiber demand composition for the central pointing P0
+    # (sky/FluxStd are subtracted from the 1794 available, not shown)
+    w = 9.0
+    b = np.zeros(nv, float)
+    for arr, col, lab in ((snIa[:, 0], "#d62728", "SN Ia"),
+                          (snCC[:, 0], "#1f77b4", "CC SN"),
+                          (hoIa[:, 0], "#ff7f0e", "Ia host"),
+                          (hoCC[:, 0], "#9ecae1", "CC host")):
+        ax1.bar(dn, arr, width=w, bottom=b, color=col, label=lab)
+        b = b + arr
+    ax1.set_ylabel("Fibers / pointing", fontsize=18)
     ax1.tick_params(labelsize=TFS)
-    ax1.legend(fontsize=10, loc="upper left")
-    ax1.set_title("PFS fiber demand in ELAIS-N1 (central pointing P0)  "
-                  f"[{FIBERS_AVAIL} science fibers available]", fontsize=TT)
-    ax1.grid(True, alpha=0.3)
+    ax1.legend(fontsize=12, loc="upper right", ncol=2)
+    ax1.set_title("PFS target-fiber demand in ELAIS-N1 (central pointing P0)  "
+                  f"[{FIBERS_AVAIL} available $= 2394-400$ sky$-200$ FluxStd]", fontsize=TT)
+    ax1.grid(True, axis="y", alpha=0.3)
 
     # panel 2: spare fibers (min over pointings = worst case, and P0)
-    ax2.plot(*gapped(dn, spare.min(axis=1)), "-o", color="#d62728", ms=4,
-             label="min spare (worst pointing)")
-    ax2.plot(*gapped(dn, spare[:, 0].astype(float)), "-s", color="#2ca02c", ms=3, label="P0 spare")
-    ax2.axhline(FIBERS_AVAIL, color="0.6", ls=":", lw=1)
-    ax2.set_ylabel("spare fibers / pointing", fontsize=LFS)
-    ax2.set_xlabel("date", fontsize=LFS)
+    ax2.plot(*gapped(dn, spare.max(axis=1).astype(float)), "-o", color="#d62728", ms=4,
+             label="Largest spare (of 7 pointings)")
+    ax2.plot(*gapped(dn, spare.min(axis=1).astype(float)), "-o", color="#1f77b4", ms=4,
+             label="Smallest spare (of 7 pointings)")
+    ax2.plot(*gapped(dn, spare[:, 0].astype(float)), "-s", color="#2ca02c", ms=3,
+             label="P0 spare")
+    ax2.axhline(FIBERS_AVAIL, color="0.6", ls=":", lw=1, label=f"Available = {FIBERS_AVAIL}")
+    ax2.set_ylabel("Spare fibers / pointing", fontsize=18)
+    ax2.set_xlabel("Date", fontsize=18)
     ax2.tick_params(labelsize=TFS)
-    ax2.legend(fontsize=10, loc="lower left")
+    ax2.set_ylim(spare.min() - 25, FIBERS_AVAIL + 55)     # headroom for upper-right legend
+    ax2.legend(fontsize=12, loc="upper right", ncol=2)
     ax2.grid(True, alpha=0.3)
     ax2.xaxis.set_major_locator(mdates.MonthLocator((1, 4, 7, 10)))
     ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
