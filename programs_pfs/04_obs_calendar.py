@@ -17,8 +17,10 @@ import glob
 import argparse
 import warnings
 import numpy as np
+import astropy.units as u
 from astropy.io import fits
 from astropy.time import Time
+from astropy.coordinates import EarthLocation, SkyCoord, AltAz, get_sun
 
 warnings.simplefilter("ignore")          # silence ERFA dubious-year warnings
 
@@ -26,6 +28,28 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV_DIR = os.path.join(HERE, "outputs", "csv")
 DEFAULT_DATADIR = "/Volumes/exdisk1/data/Roman/ltcv_sim"
+ELAIS_N1_RADEC = (242.5, 54.5)           # field center (deg)
+
+
+def subaru_site():
+    try:
+        return EarthLocation.of_site("Subaru")
+    except Exception:
+        return EarthLocation(lat=19.8255 * u.deg, lon=-155.4761 * u.deg, height=4139 * u.m)
+
+
+def nightly_visible_hours(date_mjds, target, site, elev=30.0, twilight=-18.0, dt=0.5):
+    """Visible hours per night (target elevation > elev during Sun < twilight)
+    for each evening-date MJD."""
+    utc_h = np.arange(4.0, 16.0 + 1e-6, dt)            # UTC 04-16 = HST 18:00-06:00
+    base = Time(np.asarray(date_mjds, float), format="mjd")
+    times = (base[:, None] + 1 * u.day) + utc_h[None, :] * u.hour
+    flat = times.ravel()
+    aa = AltAz(obstime=flat, location=site)
+    talt = target.transform_to(aa).alt.deg.reshape(times.shape)
+    salt = get_sun(flat).transform_to(aa).alt.deg.reshape(times.shape)
+    vis = (salt < twilight) & (talt > elev)
+    return vis.sum(axis=1) * dt
 
 # Roman bands present in the sim, ordered by effective wavelength (nm)
 BAND_WL = {"R062-R": 620, "Z087-Z": 870, "Y106-Y": 1060,
@@ -58,7 +82,21 @@ def main():
     ap.add_argument("--field", default="ELAIS-N1")
     ap.add_argument("--model", default="SNIaMODEL00",
                     help="SNANA model whose PHOT defines the cadence (default SNIaMODEL00)")
+    ap.add_argument("--shift-to-date", default=None, dest="shift_to",
+                    help="shift the cadence so --main-start maps to this date (e.g. 2028-06-01)")
+    ap.add_argument("--main-start", default="2029-01-01",
+                    help="current main-survey start date in the sim (default 2029-01-01)")
+    ap.add_argument("--shade-visible", action="store_true",
+                    help="shade months ELAIS-N1 is visible > --vis-hours/night from Subaru")
+    ap.add_argument("--vis-hours", type=float, default=2.0,
+                    help="visibility threshold in hours/night (default 2)")
+    ap.add_argument("--label", default="",
+                    help="filename suffix to keep variants separate (e.g. _shift2028)")
     args = ap.parse_args()
+
+    shift_days = 0.0
+    if args.shift_to is not None:
+        shift_days = Time(args.shift_to).mjd - Time(args.main_start).mjd
 
     os.makedirs(PNG_DIR, exist_ok=True)
     os.makedirs(CSV_DIR, exist_ok=True)
@@ -66,19 +104,22 @@ def main():
     epochs = collect_epochs(args.datadir, args.field, args.model)
     bands = [b for b in BAND_WL if b in epochs]            # wavelength order
     allmjd = np.concatenate([epochs[b] for b in bands])
-    t0, t1 = allmjd.min(), allmjd.max()
+    t0, t1 = allmjd.min() + shift_days, allmjd.max() + shift_days
+    if shift_days:
+        print(f"shifting cadence by {shift_days:.0f} days "
+              f"({args.main_start} -> {args.shift_to})")
     print(f"{args.field}: {len(bands)} bands, "
           f"{Time(t0,format='mjd').iso[:10]} -> {Time(t1,format='mjd').iso[:10]}")
     for b in bands:
         print(f"  {b:10s}: {len(epochs[b]):4d} epochs")
 
     # ---- CSV (unique nights per band) ----
-    csv = os.path.join(CSV_DIR, f"04_obs_calendar_{args.field}.csv")
+    csv = os.path.join(CSV_DIR, f"04_obs_calendar_{args.field}{args.label}.csv")
     with open(csv, "w") as fo:
         fo.write("band,MJD,date\n")
         for b in bands:
             for m in epochs[b]:
-                fo.write(f"{b},{m:.3f},{Time(m,format='mjd').iso[:10]}\n")
+                fo.write(f"{b},{m:.3f},{Time(m+shift_days,format='mjd').iso[:10]}\n")
     print("epochs ->", csv)
 
     # ---- plot ----
@@ -103,8 +144,9 @@ def main():
     norm = (wl - wl.min()) / (wl.max() - wl.min())
     colors = [cmap(x) for x in norm]
 
-    dnum = {b: mdates.date2num(Time(epochs[b], format="mjd").to_datetime()) for b in bands}
-    alln = mdates.date2num(Time(allmjd, format="mjd").to_datetime())
+    dnum = {b: mdates.date2num(Time(epochs[b] + shift_days, format="mjd").to_datetime())
+            for b in bands}
+    alln = mdates.date2num(Time(allmjd + shift_days, format="mjd").to_datetime())
 
     fig, (axtop, axev) = plt.subplots(
         2, 1, figsize=(13, 7), height_ratios=[1, 3], sharex=True,
@@ -115,8 +157,9 @@ def main():
     axtop.hist(alln, bins=nb, color="0.4")
     axtop.set_ylabel("obs / month", fontsize=LABEL_FS)
     axtop.tick_params(labelsize=TICK_FS)
-    axtop.set_title(f"Roman HLTDS observation cadence — {args.field}  "
-                    f"({Time(t0,format='mjd').iso[:7]} to {Time(t1,format='mjd').iso[:7]})",
+    subtitle = (f"main survey from {args.shift_to}" if shift_days
+                else f"{Time(t0,format='mjd').iso[:7]} to {Time(t1,format='mjd').iso[:7]}")
+    axtop.set_title(f"Roman HLTDS observation cadence — {args.field}  ({subtitle})",
                     fontsize=TITLE_FS)
 
     # bottom: event raster per band
@@ -134,7 +177,40 @@ def main():
     axev.xaxis.set_minor_locator(mdates.MonthLocator((1, 4, 7, 10)))
     axev.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
-    png = os.path.join(PNG_DIR, f"04_obs_calendar_{args.field}.png")
+    # shade the months ELAIS-N1 is visible > vis_hours/night from Subaru
+    if args.shade_visible:
+        site = subaru_site()
+        target = SkyCoord(ELAIS_N1_RADEC[0] * u.deg, ELAIS_N1_RADEC[1] * u.deg)
+        d0 = int(np.floor((allmjd + shift_days).min()))
+        d1 = int(np.ceil((allmjd + shift_days).max()))
+        days = np.arange(d0, d1 + 1)
+        vh = nightly_visible_hours(days, target, site, elev=30.0, twilight=-18.0)
+        mask = vh > args.vis_hours
+        ddn = mdates.date2num(Time(days, format="mjd").to_datetime())
+        first, i = True, 0
+        while i < len(mask):
+            if mask[i]:
+                j = i
+                while j + 1 < len(mask) and mask[j + 1]:
+                    j += 1
+                lbl = (f"Subaru: visible $>{args.vis_hours:g}$ h/night" if first else None)
+                for ax in (axtop, axev):
+                    ax.axvspan(ddn[i], ddn[j], color="#2ca02c", alpha=0.13, lw=0,
+                               zorder=0, label=(lbl if ax is axev else None))
+                first, i = False, j + 1
+            else:
+                i += 1
+        axev.legend(loc="upper right", fontsize=10, framealpha=0.9)
+
+    # mark the (shifted) survey start
+    if shift_days:
+        x0 = mdates.date2num(Time(args.shift_to).to_datetime())
+        for ax in (axtop, axev):
+            ax.axvline(x0, color="k", ls=":", lw=1.3, zorder=3)
+        axev.text(x0, len(bands) - 0.4, f" survey start\n {args.shift_to}",
+                  fontsize=9, va="top", ha="left")
+
+    png = os.path.join(PNG_DIR, f"04_obs_calendar_{args.field}{args.label}.png")
     fig.savefig(png, dpi=140)
     print("plot ->", png)
 
