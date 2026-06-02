@@ -45,11 +45,11 @@ def field_head_files(datadir, field, model="SNIaMODEL00"):
     return sorted(files)
 
 
-def load_field(datadir, field, cols):
+def load_field(datadir, field, cols, model="SNIaMODEL00"):
     """Concatenate SNID/RA/Dec/z/zmag over all HEAD files, using the column
     names in `cols` (the SN or its host galaxy)."""
     snid, ra, dec, z, zmag = [], [], [], [], []
-    for f in field_head_files(datadir, field):
+    for f in field_head_files(datadir, field, model):
         with fits.open(f) as h:
             d = h[1].data
             if d is None or len(d) == 0:
@@ -91,6 +91,11 @@ def main():
                     dest="color_by", help="quantity mapped to color (default redshift)")
     ap.add_argument("--cmin", type=float, default=None, help="color-axis min override")
     ap.add_argument("--cmax", type=float, default=None, help="color-axis max override")
+    ap.add_argument("--model", default="SNIaMODEL00",
+                    help="SNANA model: SNIaMODEL00 (Ia), NONIaMODEL06 (CC), "
+                         "NONIaMODEL02 (TDE), ...")
+    ap.add_argument("--tag", default="snia",
+                    help="short type label for output filenames (e.g. snia, cc, tde)")
     args = ap.parse_args()
     fields = args.fields
     cols = TARGETS[args.target]
@@ -100,7 +105,7 @@ def main():
 
     data = {}
     for fld in fields:
-        snid, ra, dec, z, zmag = load_field(args.datadir, fld, cols)
+        snid, ra, dec, z, zmag = load_field(args.datadir, fld, cols, args.model)
         if len(ra):   # drop sentinel positions (e.g. unmatched hosts at -999)
             ok = np.isfinite(ra) & np.isfinite(dec) & (ra >= 0) & (ra <= 360) & (np.abs(dec) <= 90)
             snid, ra, dec, z, zmag = (a[ok] for a in (snid, ra, dec, z, zmag))
@@ -114,7 +119,7 @@ def main():
                   f"Dec [{dec.min():.2f},{dec.max():.2f}]  "
                   f"z [{z.min():.2f},{z.max():.2f}]")
     ntot = sum(len(d[1]) for d in data.values())
-    base = "03_snia_host_radec" if args.target == "host" else "03_snia_radec"
+    base = f"03_{args.tag}_host_radec" if args.target == "host" else f"03_{args.tag}_radec"
     fsuffix = "" if fields == FIELDS else "_" + "_".join(fields)
     if args.zmag_cut is not None:
         fsuffix += f"_Zlt{args.zmag_cut:g}"
