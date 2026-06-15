@@ -40,7 +40,7 @@ def main():
     bins = np.arange(0.0, 3.0 + 1e-9, 0.1)
     fig, ax = plt.subplots(figsize=(9, 6))
     ax.hist([z[blue], z[green], z[red]], bins=bins, stacked=True,
-            color=["blue", "green", "red"], edgecolor="white", linewidth=0.3,
+            color=["blue", "limegreen", "red"], edgecolor="white", linewidth=0.3,
             label=[f"Host $Z<24$  ($N={blue.sum():,}$)",
                    f"Host $24\\leq Z<25.5$  ($N={green.sum():,}$)",
                    f"Host $Z\\geq25.5$  ($N={red.sum():,}$)"])
