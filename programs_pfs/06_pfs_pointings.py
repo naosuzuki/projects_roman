@@ -57,6 +57,10 @@ def main():
     ap.add_argument("--rotate", type=float, default=0.0,
                     help="rigid rotation of the flower [deg] (A=0, B=30)")
     ap.add_argument("--label", default=None, help="config label for title/filename")
+    ap.add_argument("--hex-color", default="#1f6fe0", dest="hex_color",
+                    help="PFS hexagon color (fill+outline)")
+    ap.add_argument("--label-color", default="red", dest="label_color",
+                    help="color of the P0..P6 markers and annotations")
     ap.add_argument("--sne-csv", default=SNE_CSV)
     ap.add_argument("--host-csv",
                     default=os.path.join(CSV_DIR, "03_snia_host_radec_ELAIS-N1.csv"))
@@ -174,15 +178,15 @@ def main():
     # 7 hexagonal pointings: light fill + solid outline
     for i, (xc, yc) in enumerate(centers):
         sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc, R, args.rotate)])
-        ax.add_patch(Polygon(sky, closed=True, facecolor="#1f6fe0",
+        ax.add_patch(Polygon(sky, closed=True, facecolor=args.hex_color,
                              edgecolor="none", alpha=0.12))
         ax.add_patch(Polygon(sky, closed=True, fill=False,
-                             edgecolor="#1f6fe0", lw=2.0, alpha=0.9))
+                             edgecolor=args.hex_color, lw=2.0, alpha=0.9))
         rc, dc = t2sky(xc, yc)
-        ax.plot(rc, dc, "+", color="red", ms=12, mew=2.2)
-        ax.text(rc, dc, f"  P{i}", color="red", fontsize=19, fontweight="bold",
-                ha="left", va="bottom")
-        ax.text(rc, dc, f"  ({counts[i]})", color="red", fontsize=16,
+        ax.plot(rc, dc, "+", color=args.label_color, ms=12, mew=2.2)
+        ax.text(rc, dc, f"  P{i}", color=args.label_color, fontsize=19,
+                fontweight="bold", ha="left", va="bottom")
+        ax.text(rc, dc, f"  ({counts[i]})", color=args.label_color, fontsize=16,
                 ha="left", va="top")
 
     ax.set_aspect(1.0 / cosd)
