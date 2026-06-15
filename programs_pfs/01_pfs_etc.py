@@ -35,9 +35,11 @@ ARM_DISP_NM = {0: 0.0659, 1: 0.0830, 2: 0.0781}
 # Broadband filters: (lambda_min_nm, lambda_max_nm, preferred_arm).
 # Ranges approximate HSC/SDSS; "arm" disambiguates the small arm overlaps.
 BANDS = {
-    "g": (400.0, 550.0, 0),
+    "g": (400.0, 550.0, 0),   # HSC-g, eff ~478 nm (blue arm)
     "r": (550.0, 690.0, 0),
+    "r2": (560.0, 650.0, 0),  # HSC-r2, eff ~620 nm (blue-arm portion)
     "i": (700.0, 830.0, 1),   # effective wavelength ~770 nm (red arm)
+    "i2": (700.0, 830.0, 1),  # HSC-i2, eff ~771 nm (red arm; ~ i)
     "z": (830.0, 925.0, 1),
     "y": (950.0, 1060.0, 2),
 }
