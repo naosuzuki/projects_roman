@@ -77,6 +77,12 @@ def main():
 
     pts = np.column_stack([xi, eta])
     centers = flower_centers(R, args.rotate)
+    # number the ring P1..P6 starting from the right-most (west) pointing and
+    # going counter-clockwise.  On the plot RA runs right-to-left, so screen
+    # x = -xi; the CCW screen angle is atan2(eta, -xi).
+    ring = centers[1:]
+    sang = [np.degrees(np.arctan2(e, -x)) % 360 for (x, e) in ring]
+    centers = [centers[0]] + [ring[k] for k in np.argsort(sang)]
     covered, counts = coverage(centers, R, args.rotate, pts)
 
     # A (0 deg) and B (30 deg) for the combined two-visit coverage
@@ -155,25 +161,29 @@ def main():
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "stix"
-    LABEL_FS, TICK_FS, TITLE_FS = 16, 13, 16
+    LABEL_FS, TICK_FS, TITLE_FS = 20, 15, 18
 
     fig, ax = plt.subplots(figsize=(9, 9))
 
     # SNe: lost (gray) and covered (blue)
     raL, decL = ra[~covered], dec[~covered]
     raC, decC = ra[covered], dec[covered]
-    ax.scatter(raL, decL, s=4, c="0.7", alpha=0.5, linewidths=0, label="not covered")
-    ax.scatter(raC, decC, s=4, c="#2c6fbb", alpha=0.5, linewidths=0, label="covered")
+    ax.scatter(raL, decL, s=4, c="0.7", alpha=0.5, linewidths=0, label="Not covered")
+    ax.scatter(raC, decC, s=4, c="#2c6fbb", alpha=0.5, linewidths=0, label="Covered")
 
-    # 7 hexagonal pointings
+    # 7 hexagonal pointings: light fill + solid outline
     for i, (xc, yc) in enumerate(centers):
         sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc, R, args.rotate)])
-        ax.add_patch(Polygon(sky, closed=True, fill=True, facecolor="#d62728",
-                             edgecolor="#d62728", alpha=0.10, lw=2.0))
+        ax.add_patch(Polygon(sky, closed=True, facecolor="#1f6fe0",
+                             edgecolor="none", alpha=0.12))
+        ax.add_patch(Polygon(sky, closed=True, fill=False,
+                             edgecolor="#1f6fe0", lw=2.0, alpha=0.9))
         rc, dc = t2sky(xc, yc)
-        ax.plot(rc, dc, "+", color="#d62728", ms=10, mew=2)
-        ax.text(rc, dc, f"  P{i}\n  ({counts[i]})", color="#7a1417",
-                fontsize=11, ha="left", va="center")
+        ax.plot(rc, dc, "+", color="red", ms=12, mew=2.2)
+        ax.text(rc, dc, f"  P{i}", color="red", fontsize=19, fontweight="bold",
+                ha="left", va="bottom")
+        ax.text(rc, dc, f"  ({counts[i]})", color="red", fontsize=16,
+                ha="left", va="top")
 
     ax.set_aspect(1.0 / cosd)
     ax.invert_xaxis()
@@ -185,10 +195,10 @@ def main():
                  f"FoV {args.fov}$^\\circ$, {ncov}/{len(xi)} SNe covered "
                  f"({100*ncov/len(xi):.0f}\\%);  A$\\cup$B = "
                  f"{100*comb.sum()/len(xi):.0f}\\%", fontsize=TITLE_FS)
-    ax.legend(fontsize=11, loc="upper right", markerscale=2)
+    ax.legend(fontsize=17, loc="upper right", markerscale=2)
     ax.grid(True, alpha=0.25)
     ax.text(0.02, 0.02, "P$i$ (n) = pointing index (SNe in field)",
-            transform=ax.transAxes, fontsize=10, color="0.3",
+            transform=ax.transAxes, fontsize=12, color="0.3",
             bbox=dict(fc="white", ec="0.7", alpha=0.8))
 
     png = os.path.join(PNG_DIR, f"06_pfs_pointings_hex7{args.label}_ELAIS-N1.png")
