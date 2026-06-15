@@ -92,6 +92,11 @@ def main():
                     help="visibility threshold in hours/night (default 2)")
     ap.add_argument("--label", default="",
                     help="filename suffix to keep variants separate (e.g. _shift2028)")
+    ap.add_argument("--pilot-start", default=None, dest="pilot_start",
+                    help="re-shift the early pilot group to start on this date "
+                         "(e.g. 2027-04-15), leaving the main survey unchanged")
+    ap.add_argument("--pilot-gap", type=float, default=90.0,
+                    help="min gap (days) separating the pilot group from the main survey")
     args = ap.parse_args()
 
     shift_days = 0.0
@@ -103,11 +108,32 @@ def main():
 
     epochs = collect_epochs(args.datadir, args.field, args.model)
     bands = [b for b in BAND_WL if b in epochs]            # wavelength order
-    allmjd = np.concatenate([epochs[b] for b in bands])
-    t0, t1 = allmjd.min() + shift_days, allmjd.max() + shift_days
     if shift_days:
         print(f"shifting cadence by {shift_days:.0f} days "
               f"({args.main_start} -> {args.shift_to})")
+
+    # optional: re-shift the early "pilot" group to start on --pilot-start,
+    # leaving the main survey untouched.
+    pilot_extra, pilot_end = 0.0, -1e18
+    if args.pilot_start is not None:
+        nights = np.unique(np.round(
+            np.concatenate([epochs[b] for b in bands]) + shift_days, 0))
+        nights.sort()
+        g = np.where(np.diff(nights) > args.pilot_gap)[0]
+        pilot_end = nights[g[0]] if len(g) else nights[-1]
+        pilot_extra = Time(args.pilot_start).mjd - nights[0]
+        print(f"  pilot group {Time(nights[0],format='mjd').iso[:10]}.."
+              f"{Time(pilot_end,format='mjd').iso[:10]} -> +{pilot_extra:.0f} d "
+              f"(starts {args.pilot_start})")
+
+    def shmjd(m):
+        """Final shifted MJD: global shift + extra pilot shift for pilot epochs."""
+        s = np.asarray(m, float) + shift_days
+        return s + pilot_extra * (s <= pilot_end + 0.5)
+
+    sh = {b: shmjd(epochs[b]) for b in bands}
+    sh_all = np.concatenate([sh[b] for b in bands])
+    t0, t1 = sh_all.min(), sh_all.max()
     print(f"{args.field}: {len(bands)} bands, "
           f"{Time(t0,format='mjd').iso[:10]} -> {Time(t1,format='mjd').iso[:10]}")
     for b in bands:
@@ -118,8 +144,8 @@ def main():
     with open(csv, "w") as fo:
         fo.write("band,MJD,date\n")
         for b in bands:
-            for m in epochs[b]:
-                fo.write(f"{b},{m:.3f},{Time(m+shift_days,format='mjd').iso[:10]}\n")
+            for m, s in zip(epochs[b], sh[b]):
+                fo.write(f"{b},{m:.3f},{Time(s,format='mjd').iso[:10]}\n")
     print("epochs ->", csv)
 
     # ---- plot ----
@@ -144,9 +170,8 @@ def main():
     norm = (wl - wl.min()) / (wl.max() - wl.min())
     colors = [cmap(x) for x in norm]
 
-    dnum = {b: mdates.date2num(Time(epochs[b] + shift_days, format="mjd").to_datetime())
-            for b in bands}
-    alln = mdates.date2num(Time(allmjd + shift_days, format="mjd").to_datetime())
+    dnum = {b: mdates.date2num(Time(sh[b], format="mjd").to_datetime()) for b in bands}
+    alln = mdates.date2num(Time(sh_all, format="mjd").to_datetime())
 
     fig, (axtop, axev) = plt.subplots(
         2, 1, figsize=(13, 7), height_ratios=[1, 3], sharex=True,
@@ -181,8 +206,8 @@ def main():
     if args.shade_visible:
         site = subaru_site()
         target = SkyCoord(ELAIS_N1_RADEC[0] * u.deg, ELAIS_N1_RADEC[1] * u.deg)
-        d0 = int(np.floor((allmjd + shift_days).min()))
-        d1 = int(np.ceil((allmjd + shift_days).max()))
+        d0 = int(np.floor(sh_all.min()))
+        d1 = int(np.ceil(sh_all.max()))
         days = np.arange(d0, d1 + 1)
         vh = nightly_visible_hours(days, target, site, elev=30.0, twilight=-18.0)
         mask = vh > args.vis_hours
