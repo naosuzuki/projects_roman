@@ -84,12 +84,11 @@ def main():
                          for m in range(1, 13)])
     mon_tot = np.array([hrs_obs[months == m].sum() for m in range(1, 13)])
 
-    # airmass-quality bins during dark: red 2.0-1.8, green 1.8-1.5, blue <=1.5
-    e18 = 90 - np.degrees(np.arccos(1 / 1.8))      # ~33.7 deg  (airmass 1.8)
-    e15 = 90 - np.degrees(np.arccos(1 / 1.5))      # ~41.8 deg  (airmass 1.5)
-    red_h = ((dark & (talt > alt_lim) & (talt <= e18)) * dt).sum(axis=1)
-    grn_h = ((dark & (talt > e18) & (talt <= e15)) * dt).sum(axis=1)
-    blu_h = ((dark & (talt > e15)) * dt).sum(axis=1)
+    # elevation-band bins during dark: red <45, green 45-50, blue >50 deg
+    E1, E2 = 45.0, 50.0
+    red_h = ((dark & (talt > alt_lim) & (talt < E1)) * dt).sum(axis=1)   # 30-45
+    grn_h = ((dark & (talt >= E1) & (talt < E2)) * dt).sum(axis=1)       # 45-50
+    blu_h = ((dark & (talt >= E2)) * dt).sum(axis=1)                     # >50
 
     def _monthly(arr):
         return np.array([arr[months == m].mean() if (months == m).any() else 0
@@ -187,8 +186,15 @@ def main():
     # ---- dedicated "observable hours" figure: per night + per month ----
     fig2, (axn, axm) = plt.subplots(2, 1, figsize=(13, 8), constrained_layout=True)
 
-    axn.fill_between(dnum, hrs_obs, color="#3b7dd8", alpha=0.85,
-                     label=f"Visible (elevation $>{alt_lim:.0f}^\\circ$)")
+    s1 = red_h
+    s2 = red_h + grn_h
+    s3 = red_h + grn_h + blu_h
+    axn.fill_between(dnum, 0, s1, color="#d62728", alpha=0.85,
+                     label="Elevation $<45^\\circ$")
+    axn.fill_between(dnum, s1, s2, color="#2ca02c", alpha=0.85,
+                     label="Elevation 45--50$^\\circ$")
+    axn.fill_between(dnum, s2, s3, color="#3b7dd8", alpha=0.85,
+                     label="Elevation $>50^\\circ$")
     axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
     axn.set_ylabel("Visible hours / night", fontsize=18)
     axn.set_xlabel("Date", fontsize=18)
@@ -203,15 +209,15 @@ def main():
 
     x = np.arange(12)
     axm.bar(x, mon_red, width=0.62, color="#d62728",
-            label="Airmass 2.0-1.8 (elev. 30-34$^\\circ$)")
+            label="Elevation $<45^\\circ$")
     axm.bar(x, mon_grn, width=0.62, bottom=mon_red, color="#2ca02c",
-            label="Airmass 1.8-1.5 (elev. 34-42$^\\circ$)")
+            label="Elevation 45--50$^\\circ$")
     axm.bar(x, mon_blu, width=0.62, bottom=mon_red + mon_grn, color="#3b7dd8",
-            label="Airmass $\\leq$1.5 (elev. $>$42$^\\circ$)")
+            label="Elevation $>50^\\circ$")
     for i in range(12):
         if mon_mean[i] > 0:
             axm.text(i, mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
-                     va="bottom", fontsize=9, color="0.3")
+                     va="bottom", fontsize=13, color="0.3")
     axm.set_xticks(x)
     axm.set_xticklabels(MON, fontsize=TICK_FS)
     axm.set_ylabel("Mean visible hours / night", fontsize=18)
