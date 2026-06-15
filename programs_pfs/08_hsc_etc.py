@@ -2,18 +2,15 @@
 """
 08_hsc_etc.py -- Subaru/HSC imaging exposure-time calculator.
 
-Point-source S/N (aperture photometry, native 1x1 pixels) as a function of
-total exposure time, for HSC g / r2 / i2, at source AB magnitudes 24-27.
-One figure per band, with 60/90/120-min guides.
+Point-source S/N (native 1x1 pixels) as a function of total exposure time,
+for HSC g / r2 / i2, at source AB magnitudes 24-28. One figure per band, with
+60/90/120-min guides; PFS-aligned plot style.
 
-Sky-background-limited CCD equation:
-    S/N = S / sqrt(S + B_sky + N_read),
-    S      = src_rate(mag) * t * f_enc        [source e- in aperture]
-    B_sky  = sky_rate_pix  * t * n_pix         [sky e- in aperture]
-    N_read = (t/t_exp) * n_pix * RN^2
-
-Throughputs/sky are tuned to reproduce HSC-SSP Wide-like depths
-(~5 sigma at i~26 in ~20 min). Parameters at top are easy to adjust.
+Empirical sky-background-limited model anchored to the observed depth: with the
+5-sigma 1-hour limiting magnitude m5_1h,
+    S/N(mag, t) = 5 * 10^(-0.4 (mag - m5_1h)) * sqrt(t / 1 h).
+m5_1h is set to ~26 (S/N=5 for a 26th-mag point source in 1 h), matching HSC
+observing experience; edit it per band at the top.
 """
 import os
 import numpy as np
@@ -23,68 +20,38 @@ PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV_DIR = os.path.join(HERE, "outputs", "csv")
 
 # --- telescope / detector ---
-AREA_CM2 = 52.81e4           # Subaru 8.2 m effective collecting area [cm^2]
-PIXSCALE = 0.168             # HSC pixel scale [arcsec/pix]
-RN = 4.5                     # read noise [e-/pix]
-SEEING = 0.70               # PSF FWHM [arcsec]
-T_EXP = 300.0                # single-frame time [s] (for read-noise accounting)
-NPH0 = 5.48e6                # photons/s/cm^2 per (dlam/lam) for AB=0
-
-# HSC bands: (lambda_nm, dlam/lam, total throughput, sky AB mag/arcsec^2)
+# Empirical sky-background-limited imaging model. The point-source S/N is
+# anchored to the 5-sigma limiting AB magnitude reached in 1 hour (m5_1h) and
+# scales as  S/N(mag, t) = 5 * 10^(-0.4 (mag - m5_1h)) * sqrt(t / 1 h),
+# i.e. S/N is proportional to source flux and to sqrt(exposure time). m5_1h is
+# anchored to ~26 mag at S/N = 5 in 1 h (HSC observing experience).
 HSC = {
-    "g":  dict(lam=477.0, dll=0.29, thru=0.42, sky=22.0, color="#d62728"),
-    "r2": dict(lam=623.0, dll=0.23, thru=0.48, sky=21.1, color="#1f77b4"),
-    "i2": dict(lam=771.0, dll=0.19, thru=0.40, sky=20.2, color="#2ca02c"),
+    "g":  dict(lam=477.0, m5_1h=26.4, color="#d62728"),
+    "r2": dict(lam=623.0, m5_1h=26.2, color="#1f77b4"),
+    "i2": dict(lam=771.0, m5_1h=26.0, color="#2ca02c"),
 }
 MAGS = [24.0, 25.0, 26.0, 27.0, 28.0]
 VLINES = [60, 90, 120]       # minutes
 
 
-def src_rate(mag, b):        # source electrons / s
-    return NPH0 * 10 ** (-0.4 * mag) * b["dll"] * AREA_CM2 * b["thru"]
-
-
-def sky_rate_pix(b):         # sky electrons / s / pixel
-    return (NPH0 * 10 ** (-0.4 * b["sky"]) * b["dll"] * AREA_CM2 * b["thru"]
-            * PIXSCALE ** 2)
-
-
-def aperture():
-    """n_pix in a radius=FWHM aperture and the enclosed Gaussian flux fraction."""
-    r = SEEING                                   # aperture radius = FWHM [arcsec]
-    n_pix = np.pi * r ** 2 / PIXSCALE ** 2
-    sigma = SEEING / 2.3548
-    f_enc = 1.0 - np.exp(-r ** 2 / (2 * sigma ** 2))
-    return n_pix, f_enc
-
-
-def sn(mag, t_min, b, n_pix, f_enc):
-    t = np.asarray(t_min) * 60.0
-    S = src_rate(mag, b) * t * f_enc
-    Bsky = sky_rate_pix(b) * t * n_pix
-    Nread = (t / T_EXP) * n_pix * RN ** 2
-    return S / np.sqrt(S + Bsky + Nread)
+def sn(mag, t_min, b):
+    """Point-source imaging S/N (sky-background limited)."""
+    return 5.0 * 10 ** (-0.4 * (mag - b["m5_1h"])) * np.sqrt(np.asarray(t_min) / 60.0)
 
 
 def main():
     os.makedirs(PNG_DIR, exist_ok=True); os.makedirs(CSV_DIR, exist_ok=True)
-    n_pix, f_enc = aperture()
-    t_min = np.logspace(np.log10(2), np.log10(360), 200)   # 2 min .. 6 h
-
-    print(f"HSC imaging ETC  (seeing {SEEING}\", aperture r={SEEING}\", "
-          f"n_pix={n_pix:.0f}, f_enc={f_enc:.2f})")
-    # depth check + CSV
+    print("HSC imaging ETC (empirical, sky-limited; "
+          "S/N = 5*10^(-0.4(m-m5))*sqrt(t/1h))")
     csv = os.path.join(CSV_DIR, "08_hsc_etc.csv")
     with open(csv, "w") as fo:
         fo.write("band,mag,t_min,SN\n")
         for bn, b in HSC.items():
-            s60 = sn(26.0, 60.0, b, n_pix, f_enc)
-            print(f"  {bn}: mag 26 in 60 min -> S/N {s60:.1f};  "
-                  f"5sigma depth at 20min = mag "
-                  f"{26 + 2.5*np.log10(sn(26.0,20.0,b,n_pix,f_enc)/5.0):.2f}")
+            print(f"  {bn}: 5sigma(1h) depth = {b['m5_1h']:.1f};  "
+                  f"mag 26 in 60 min -> S/N {sn(26.0, 60.0, b):.1f}")
             for mag in MAGS:
-                for tm in t_min[::20]:
-                    fo.write(f"{bn},{mag},{tm:.1f},{sn(mag,tm,b,n_pix,f_enc):.3f}\n")
+                for tm in (10, 20, 30, 60, 90, 120, 240, 360):
+                    fo.write(f"{bn},{mag},{tm},{sn(mag, tm, b):.3f}\n")
     print("table ->", csv)
 
     # --- plots: one per band ---
@@ -109,11 +76,11 @@ def main():
     for bn, b in HSC.items():
         fig, ax = plt.subplots(figsize=(8, 6))
         for mag, c in zip(MAGS, cols):
-            ax.plot(tmk, sn(mag, tmk, b, n_pix, f_enc), "o-", color=c, lw=1.8,
+            ax.plot(tmk, sn(mag, tmk, b), "o-", color=c, lw=1.8,
                     ms=5, label=f"{bn} = {mag:.0f} AB")
         # sqrt(t) reference anchored to the middle magnitude
         mref = MAGS[len(MAGS) // 2]
-        s0 = sn(mref, tmk[0], b, n_pix, f_enc)
+        s0 = sn(mref, tmk[0], b)
         ax.plot(tref, s0 * np.sqrt(tref / tmk[0]), "k--", lw=1.2, alpha=0.7,
                 label=r"$\propto\sqrt{t}$ (bkg-limited)")
         for tv in VLINES:
@@ -126,7 +93,7 @@ def main():
         ax.set_xlabel("Total Exposure Time  [min]", fontsize=17)
         ax.set_ylabel("Imaging S/N (Point Source)", fontsize=17)
         ax.set_title(f"Subaru/HSC Imaging ETC — {bn}-band S/N vs Exposure Time (log–log)\n"
-                     f"Seeing {SEEING}″, Dark Sky, "
+                     f"5$\\sigma$ Depth $\\approx$ {b['m5_1h']:.1f} mag in 1 h, "
                      f"$\\lambda\\approx{b['lam']:.0f}$ nm", fontsize=15)
         ax.tick_params(labelsize=13)
         ax.grid(True, which="both", alpha=0.3)
