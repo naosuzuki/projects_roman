@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""
+17_cc_host_specz_zhist.py -- redshift histogram of core-collapse SN HOST
+galaxies that obtain a successful PFS spectroscopic redshift (host integrated to
+S/N=5 at 10-pixel binning) in the ELAIS-N1 survey, for three weather-factor
+cases: 100% (no weather loss), 80%, and 70% of usable nights. (CC analog of
+14_snia_host_specz_zhist.py.)
+
+Weather loss is statistical, so the 80%/70% cases are the 100% distribution
+scaled by 0.80/0.70 in every bin. Reads the program-SN catalog written by
+07_fiber_budget.py (column `host_completed`, `z` = host/SN redshift).
+
+    python 17_cc_host_specz_zhist.py
+"""
+import os
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PNG_DIR = os.path.join(HERE, "outputs", "png")
+CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
+
+CASES = [(1.0, "100% (no weather loss)", "blue"),
+         (0.8, "80% weather",            "g"),
+         (0.7, "70% weather",            "red")]
+
+
+def main():
+    d = np.genfromtxt(CSV, delimiter=",", names=True, dtype=None, encoding="utf-8")
+    typ = np.asarray(d["type"]).astype(str)
+    comp = np.asarray(d["host_completed"]).astype(int)
+    z = np.asarray(d["z"]).astype(float)
+    m = (typ == "CC") & (comp == 1)
+    zo = z[m]
+    print(f"successful CC SN host spec-z: {len(zo)}  (z {zo.min():.3f}-{zo.max():.3f})")
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import font_manager as fm
+    for fnt in ("Times New Roman.ttf", "Times New Roman Bold.ttf", "Times New Roman Italic.ttf"):
+        fp = f"/System/Library/Fonts/Supplemental/{fnt}"
+        if os.path.exists(fp):
+            fm.fontManager.addfont(fp)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "stix"
+
+    bins = np.arange(0.0, np.ceil(zo.max() * 10) / 10 + 0.051, 0.05)
+    counts, edges = np.histogram(zo, bins)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    bw = (edges[1] - edges[0]) * 0.93         # slightly narrower than the bin -> small gap
+    fig, ax = plt.subplots(figsize=(9, 6))
+    # nested bars: draw 100% first, then 80%, then 70% on top, so each bin shows
+    # red (0-70%), a green band (70-80%) and a blue band (80-100%)
+    for i, (w, lab, col) in enumerate(CASES):
+        n = w * len(zo)
+        ax.bar(centers, counts * w, width=bw, color=col, edgecolor="white",
+               linewidth=0.4, zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
+
+    ax.set_xlabel("Redshift", fontsize=18)
+    ax.set_ylabel("Number of CC SN Hosts (Successful Spec-$z$)", fontsize=18)
+    ax.set_title("ELAIS-N1 Core-Collapse SN Host Galaxies with Successful PFS Spec-$z$ vs Redshift",
+                 fontsize=14)
+    ax.tick_params(labelsize=13)
+    ax.set_xlim(0, bins[-1])
+    ax.legend(fontsize=13, loc="upper left")
+    ax.grid(True, axis="y", alpha=0.3)
+
+    png = os.path.join(PNG_DIR, "17_cc_host_specz_zhist_ELAIS-N1.png")
+    fig.tight_layout()
+    fig.savefig(png, dpi=140)
+    print("plot ->", png)
+
+
+if __name__ == "__main__":
+    main()
