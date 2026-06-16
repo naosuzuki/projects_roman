@@ -1,4 +1,4 @@
-class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate
-Ia,13094,3091,1416,760,714,971,0.6857
-CC,18774,2769,1476,797,779,1018,0.6897
-TDE,21,7,5,2,3,3,0.6000
+class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate,net_success
+Ia,13094,3091,1416,760,714,971,0.6857,0.4800
+CC,18774,2769,1476,797,779,1018,0.6897,0.4828
+TDE,21,7,5,2,3,3,0.6000,0.4200

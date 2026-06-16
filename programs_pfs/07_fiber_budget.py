@@ -45,6 +45,7 @@ SN_ZCUT = 24.0
 HOST_ZCUT = 25.5
 SN_TARGET = 5.0              # target host S/N at 10-pix binning
 NPIX_BIN = 10
+WEATHER = 0.70               # fraction of usable (clear) nights at Maunakea
 SHIFT_DAYS = Time("2028-06-01").mjd - Time("2029-01-01").mjd   # -214
 SURVEY_START = Time("2028-06-01").mjd
 SURVEY_END = Time("2030-05-31").mjd
@@ -264,9 +265,10 @@ def main():
 
     ycsv = os.path.join(CSV_DIR, "07_specz_yield_ELAIS-N1.csv")
     print("\nPFS spec-z yield (live transient observed >=1 visit while Z<24, covered):")
-    print("  class  Roman  reachZ<24  visible  observed  success(obs/visible)")
+    print(f"  class  Roman  reachZ<24  visible  observed  success  net(x{WEATHER:.2f} wx)")
     with open(ycsv, "w") as fo:
-        fo.write("class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate\n")
+        fo.write("class,N_roman,N_program,N_visible,observed_A,observed_B,observed,"
+                 "success_rate,net_success\n")
         for c in CLASSES:
             cm = (typ == c)
             nrom = int(ntotal[c])
@@ -274,8 +276,10 @@ def main():
             oa, ob, ou = (int((sn_obs_A & cm).sum()), int((sn_obs_B & cm).sum()),
                           int((sn_observed & cm).sum()))
             sr = ou / nvis if nvis else 0.0
-            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f}\n")
-            print(f"  {c:3s}  {nrom:6d}  {npr:7d}  {nvis:6d}  {ou:6d}   {100*sr:5.1f}%")
+            net = sr * WEATHER
+            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f},{net:.4f}\n")
+            print(f"  {c:3s}  {nrom:6d}  {npr:7d}  {nvis:6d}  {ou:6d}   "
+                  f"{100*sr:5.1f}%   {100*net:5.1f}%")
     print("specz yield ->", ycsv)
 
     # ---- reproducible CSVs ----
