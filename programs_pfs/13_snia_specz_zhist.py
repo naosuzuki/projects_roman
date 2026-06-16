@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+13_snia_specz_zhist.py -- redshift histogram of SN Ia that obtain a successful
+live PFS spectroscopic redshift in the ELAIS-N1 survey, for three weather-factor
+cases: 100% (no weather loss), 80%, and 70% of usable nights.
+
+Weather loss is statistical, so the 80%/70% cases are the 100% distribution
+scaled by 0.80/0.70 in every bin. Reads the program-SN catalog written by
+07_fiber_budget.py (column `observed` = caught live while Z<24, `z` = redshift).
+
+    python 13_snia_specz_zhist.py
+"""
+import os
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PNG_DIR = os.path.join(HERE, "outputs", "png")
+CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
+
+CASES = [(1.0, "100% (no weather loss)", "#1f77b4"),
+         (0.8, "80% weather",            "#2ca02c"),
+         (0.7, "70% weather",            "#d62728")]
+
+
+def main():
+    d = np.genfromtxt(CSV, delimiter=",", names=True, dtype=None, encoding="utf-8")
+    typ = np.asarray(d["type"]).astype(str)
+    obs = np.asarray(d["observed"]).astype(int)
+    z = np.asarray(d["z"]).astype(float)
+    m = (typ == "Ia") & (obs == 1)
+    zo = z[m]
+    print(f"successful SN Ia spec-z: {len(zo)}  (z {zo.min():.3f}-{zo.max():.3f})")
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import font_manager as fm
+    for fnt in ("Times New Roman.ttf", "Times New Roman Bold.ttf", "Times New Roman Italic.ttf"):
+        fp = f"/System/Library/Fonts/Supplemental/{fnt}"
+        if os.path.exists(fp):
+            fm.fontManager.addfont(fp)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "stix"
+
+    bins = np.arange(0.0, np.ceil(zo.max() * 10) / 10 + 0.051, 0.05)
+    fig, ax = plt.subplots(figsize=(9, 6))
+    for i, (w, lab, col) in enumerate(CASES):
+        wts = np.full(len(zo), w)
+        n = w * len(zo)
+        if i == 0:                       # 100% as a filled envelope
+            ax.hist(zo, bins=bins, weights=wts, histtype="stepfilled",
+                    color=col, alpha=0.30, label=f"{lab}  ($N={n:.0f}$)")
+        ax.hist(zo, bins=bins, weights=wts, histtype="step",
+                color=col, lw=2.4, label=(None if i == 0 else f"{lab}  ($N={n:.0f}$)"))
+
+    ax.set_xlabel("Redshift", fontsize=18)
+    ax.set_ylabel("Number of SN Ia (Successful Spec-$z$)", fontsize=18)
+    ax.set_title("ELAIS-N1 SN Ia with Successful PFS Spec-$z$ vs Redshift",
+                 fontsize=16)
+    ax.tick_params(labelsize=13)
+    ax.set_xlim(0, bins[-1])
+    ax.legend(fontsize=13, loc="upper right")
+    ax.grid(True, axis="y", alpha=0.3)
+
+    png = os.path.join(PNG_DIR, "13_snia_specz_zhist_ELAIS-N1.png")
+    fig.tight_layout()
+    fig.savefig(png, dpi=140)
+    print("plot ->", png)
+
+
+if __name__ == "__main__":
+    main()

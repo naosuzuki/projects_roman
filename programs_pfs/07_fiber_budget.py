@@ -105,7 +105,7 @@ def field_files(model, kind):
 def load_program_sne():
     """Return dict arrays for SNe whose Z087 light curve reaches <24 (program SNe):
     type, ra,dec (SN), hra,hdec (host), hostZ, t1,t2 (active window, shifted MJD)."""
-    rec = dict(typ=[], ra=[], dec=[], hra=[], hdec=[], hostz=[], t1=[], t2=[])
+    rec = dict(typ=[], z=[], ra=[], dec=[], hra=[], hdec=[], hostz=[], t1=[], t2=[])
     ntotal = {t: 0 for t in MODELS}        # all simulated Roman transients per class
     for typ, model in MODELS.items():
         for hf in field_files(model, "HEAD"):
@@ -130,6 +130,7 @@ def load_program_sne():
                         continue
                     t = zt[good]
                     rec["typ"].append(typ)
+                    rec["z"].append(float(H["SIM_REDSHIFT_CMB"][k]))
                     rec["ra"].append(float(H["RA"][k]))
                     rec["dec"].append(float(H["DEC"][k]))
                     rec["hra"].append(float(H["HOSTGAL_RA"][k]))
@@ -317,12 +318,12 @@ def main():
     # (1) program transient catalog (one row per program SN)
     pcsv = os.path.join(CSV_DIR, "07_program_sne_ELAIS-N1.csv")
     with open(pcsv, "w") as fo:
-        fo.write("id,type,ra,dec,host_ra,host_dec,host_Z,t1_mjd,t2_mjd,"
+        fo.write("id,type,z,ra,dec,host_ra,host_dec,host_Z,t1_mjd,t2_mjd,"
                  "pA_sn,pB_sn,pA_host,pB_host,host_target,host_visits_needed,"
                  "observed_A,observed_B,observed\n")
         for k in range(n):
             vn = int(visits_needed[k]) if host_ok[k] else -1
-            fo.write(f"{k},{typ[k]},{sn['ra'][k]:.5f},{sn['dec'][k]:.5f},"
+            fo.write(f"{k},{typ[k]},{sn['z'][k]:.5f},{sn['ra'][k]:.5f},{sn['dec'][k]:.5f},"
                      f"{sn['hra'][k]:.5f},{sn['hdec'][k]:.5f},{sn['hostz'][k]:.3f},"
                      f"{sn['t1'][k]:.2f},{sn['t2'][k]:.2f},"
                      f"{pA_sn[k]},{pB_sn[k]},{pA_ho[k]},{pB_ho[k]},"
