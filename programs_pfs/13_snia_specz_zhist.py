@@ -18,7 +18,7 @@ PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
 CASES = [(1.0, "100% (no weather loss)", "blue"),
-         (0.8, "80% weather",            "green"),
+         (0.8, "80% weather",            "g"),
          (0.7, "70% weather",            "red")]
 
 
@@ -44,15 +44,16 @@ def main():
     plt.rcParams["mathtext.fontset"] = "stix"
 
     bins = np.arange(0.0, np.ceil(zo.max() * 10) / 10 + 0.051, 0.05)
+    counts, edges = np.histogram(zo, bins)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    bw = (edges[1] - edges[0]) * 0.85         # narrower than the bin -> small gap
     fig, ax = plt.subplots(figsize=(9, 6))
-    # nested filled histograms: draw 100% first, then 80%, then 70% on top, so
-    # each bin shows red (0-70%), a green band (70-80%) and a blue band (80-100%)
+    # nested bars: draw 100% first, then 80%, then 70% on top, so each bin shows
+    # red (0-70%), a green band (70-80%) and a blue band (80-100%)
     for i, (w, lab, col) in enumerate(CASES):
-        wts = np.full(len(zo), w)
         n = w * len(zo)
-        ax.hist(zo, bins=bins, weights=wts, histtype="stepfilled",
-                color=col, edgecolor="white", linewidth=0.4,
-                zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
+        ax.bar(centers, counts * w, width=bw, color=col, edgecolor="white",
+               linewidth=0.4, zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
 
     ax.set_xlabel("Redshift", fontsize=18)
     ax.set_ylabel("Number of SN Ia (Successful Spec-$z$)", fontsize=18)
