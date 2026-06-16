@@ -17,9 +17,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
-CASES = [(1.0, "100% (no weather loss)", "#1f77b4"),
-         (0.8, "80% weather",            "#2ca02c"),
-         (0.7, "70% weather",            "#d62728")]
+CASES = [(1.0, "100% (no weather loss)", "blue"),
+         (0.8, "80% weather",            "green"),
+         (0.7, "70% weather",            "red")]
 
 
 def main():
@@ -60,7 +60,7 @@ def main():
                  fontsize=16)
     ax.tick_params(labelsize=13)
     ax.set_xlim(0, bins[-1])
-    ax.legend(fontsize=13, loc="upper right")
+    ax.legend(fontsize=13, loc="upper left")
     ax.grid(True, axis="y", alpha=0.3)
 
     png = os.path.join(PNG_DIR, "13_snia_specz_zhist_ELAIS-N1.png")
