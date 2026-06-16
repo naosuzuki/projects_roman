@@ -288,6 +288,31 @@ def main():
                   f"{100*sr:5.1f}%   " + "  ".join(nets))
     print("specz yield ->", ycsv)
 
+    # ---- host-galaxy (Phase III) yield: same funnel; "observed" = reached
+    # S/N=5 at 10-pix.  Host is "visible" if an observable night exists after
+    # its SN fades (post-t2) within the survey -> the success-rate denominator.
+    post_fade_obs = np.searchsorted(obs_mjds, sn["t2"], "right") < len(obs_mjds)
+    host_visible = host_ok & post_fade_obs
+    hycsv = os.path.join(CSV_DIR, "07_host_yield_ELAIS-N1.csv")
+    print("\nPFS host-galaxy spec-z yield (completed to S/N=5 at 10-pix):")
+    print(f"  class  Roman  hostZ<{HOST_ZCUT}  visible  completed  success  {whdr}")
+    with open(hycsv, "w") as fo:
+        fo.write("class,N_roman,N_host_zcut,N_visible,N_completed,success_rate" + wcols + "\n")
+        for c in CLASSES:
+            cm = (typ == c)
+            nrom, nho = int(ntotal[c]), int((host_ok & cm).sum())
+            nvis, ncomp = int((host_visible & cm).sum()), int((host_done & cm).sum())
+            sr = ncomp / nvis if nvis else 0.0
+            extra, nets = "", []
+            for w in WEATHERS:
+                no, nr = int(round(ncomp * w)), sr * w
+                extra += f",{no},{nr:.4f}"
+                nets.append(f"{no} ({100*nr:4.1f}%)")
+            fo.write(f"{c},{nrom},{nho},{nvis},{ncomp},{sr:.4f}{extra}\n")
+            print(f"  {c:3s}  {nrom:6d}  {nho:7d}  {nvis:6d}  {ncomp:6d}   "
+                  f"{100*sr:5.1f}%   " + "  ".join(nets))
+    print("host yield ->", hycsv)
+
     # ---- reproducible CSVs ----
     # (1) program transient catalog (one row per program SN)
     pcsv = os.path.join(CSV_DIR, "07_program_sne_ELAIS-N1.csv")
