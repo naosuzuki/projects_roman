@@ -45,14 +45,14 @@ def main():
 
     bins = np.arange(0.0, np.ceil(zo.max() * 10) / 10 + 0.051, 0.05)
     fig, ax = plt.subplots(figsize=(9, 6))
+    # nested filled histograms: draw 100% first, then 80%, then 70% on top, so
+    # each bin shows red (0-70%), a green band (70-80%) and a blue band (80-100%)
     for i, (w, lab, col) in enumerate(CASES):
         wts = np.full(len(zo), w)
         n = w * len(zo)
-        if i == 0:                       # 100% as a filled envelope
-            ax.hist(zo, bins=bins, weights=wts, histtype="stepfilled",
-                    color=col, alpha=0.30, label=f"{lab}  ($N={n:.0f}$)")
-        ax.hist(zo, bins=bins, weights=wts, histtype="step",
-                color=col, lw=2.4, label=(None if i == 0 else f"{lab}  ($N={n:.0f}$)"))
+        ax.hist(zo, bins=bins, weights=wts, histtype="stepfilled",
+                color=col, edgecolor="white", linewidth=0.4,
+                zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
 
     ax.set_xlabel("Redshift", fontsize=18)
     ax.set_ylabel("Number of SN Ia (Successful Spec-$z$)", fontsize=18)
