@@ -33,7 +33,7 @@ PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV_DIR = os.path.join(HERE, "outputs", "csv")
 DATADIR = "/Volumes/exdisk1/data/Roman/ltcv_sim"
 FIELD = "ELAIS-N1"
-MODELS = {"Ia": "SNIaMODEL00", "CC": "NONIaMODEL06"}
+MODELS = {"Ia": "SNIaMODEL00", "CC": "NONIaMODEL06", "TDE": "NONIaMODEL02"}
 
 FOV = 1.3
 R = FOV / 2.0
@@ -42,7 +42,7 @@ SKY = 400                    # reserved sky fibers (observatory-provided)
 FLUXSTD = 200                # reserved flux-standard fibers
 FIBERS_AVAIL = FIBERS_TOTAL - SKY - FLUXSTD   # = 1794 for program targets
 SN_ZCUT = 24.0
-HOST_ZCUT = 25.0
+HOST_ZCUT = 25.5
 SN_TARGET = 5.0              # target host S/N at 10-pix binning
 NPIX_BIN = 10
 SHIFT_DAYS = Time("2028-06-01").mjd - Time("2029-01-01").mjd   # -214
@@ -173,7 +173,9 @@ def main():
     print("Loading program SNe (Z087 light curve < 24) ...")
     sn = load_program_sne()
     n = len(sn["ra"])
-    print(f"  program SNe: {n}  (Ia={np.sum(sn['typ']=='Ia')}, CC={np.sum(sn['typ']=='CC')})")
+    CLASSES = ["Ia", "CC", "TDE"]
+    print("  program SNe: %d  (%s)" % (n, ", ".join(
+        f"{c}={int(np.sum(sn['typ']==c))}" for c in CLASSES)))
 
     ra0, dec0 = 242.498, 54.497
     cosd = np.cos(np.radians(dec0))
@@ -202,9 +204,9 @@ def main():
     vmjd = np.array([v[0] for v in visits])
     vcfg = [v[1] for v in visits]
 
-    is_Ia = (sn["typ"] == "Ia")
-    snIa = np.zeros((nv, 7), int); snCC = np.zeros((nv, 7), int)
-    hoIa = np.zeros((nv, 7), int); hoCC = np.zeros((nv, 7), int)
+    typ = sn["typ"]
+    sn_c = {c: np.zeros((nv, 7), int) for c in CLASSES}   # live-SN fibers per class
+    ho_c = {c: np.zeros((nv, 7), int) for c in CLASSES}   # host fibers per class
     for vi, (mjd, cfg) in enumerate(visits):
         psn = pA_sn if cfg == "A" else pB_sn
         pho = pA_ho if cfg == "A" else pB_ho
@@ -215,15 +217,17 @@ def main():
         for p in range(7):
             asn = active_sn & (psn == p)
             aho = active_ho & (pho == p)
-            snIa[vi, p] = np.sum(asn & is_Ia); snCC[vi, p] = np.sum(asn & ~is_Ia)
-            hoIa[vi, p] = np.sum(aho & is_Ia); hoCC[vi, p] = np.sum(aho & ~is_Ia)
+            for c in CLASSES:
+                cm = (typ == c)
+                sn_c[c][vi, p] = np.sum(asn & cm)
+                ho_c[c][vi, p] = np.sum(aho & cm)
         # accumulate host integration for those observed this visit
         obs_now = np.where(active_ho)[0]
         host_obs[obs_now] += 1
         host_done[host_obs >= visits_needed] = True
 
-    sn_fib = snIa + snCC
-    ho_fib = hoIa + hoCC
+    sn_fib = sum(sn_c[c] for c in CLASSES)
+    ho_fib = sum(ho_c[c] for c in CLASSES)
     tot_fib = sn_fib + ho_fib
     spare = FIBERS_AVAIL - tot_fib
 
@@ -234,11 +238,50 @@ def main():
     remaining = host_ok & (~completed)
     print(f"\nfiber budget/pointing: {FIBERS_TOTAL} total = {SKY} sky + {FLUXSTD} FluxStd "
           f"+ demand + spare  ({FIBERS_AVAIL} available for program)")
-    print(f"Hosts (Z<25) of program SNe: {int(host_ok.sum())}")
+    print(f"Hosts (Z<{HOST_ZCUT}) of program SNe: {int(host_ok.sum())}")
     print(f"  completed (reached S/N=5): {int(completed.sum())}")
     print(f"  remaining (incomplete) at 2030-05-31: {int(remaining.sum())}")
     print(f"    of which started but unfinished: {int((remaining & started).sum())}")
     print(f"    not yet started (SN still bright / faded late): {int((remaining & ~started).sum())}")
+
+    # ---- reproducible CSVs ----
+    # (1) program transient catalog (one row per program SN)
+    pcsv = os.path.join(CSV_DIR, "07_program_sne_ELAIS-N1.csv")
+    with open(pcsv, "w") as fo:
+        fo.write("id,type,ra,dec,host_ra,host_dec,host_Z,t1_mjd,t2_mjd,"
+                 "pA_sn,pB_sn,pA_host,pB_host,host_target,host_visits_needed\n")
+        for k in range(n):
+            vn = int(visits_needed[k]) if host_ok[k] else -1
+            fo.write(f"{k},{typ[k]},{sn['ra'][k]:.5f},{sn['dec'][k]:.5f},"
+                     f"{sn['hra'][k]:.5f},{sn['hdec'][k]:.5f},{sn['hostz'][k]:.3f},"
+                     f"{sn['t1'][k]:.2f},{sn['t2'][k]:.2f},"
+                     f"{pA_sn[k]},{pB_sn[k]},{pA_ho[k]},{pB_ho[k]},"
+                     f"{int(host_ok[k])},{vn}\n")
+    print("program SNe ->", pcsv)
+
+    # (2) per-visit per-pointing demand (one row per visit x pointing)
+    vcsv = os.path.join(CSV_DIR, "07_visit_demand_ELAIS-N1.csv")
+    with open(vcsv, "w") as fo:
+        fo.write("visit,mjd,date,config,pointing,sn_Ia,sn_CC,sn_TDE,"
+                 "host_Ia,host_CC,host_TDE,sn_total,host_total,total,spare\n")
+        for vi in range(nv):
+            for p in range(7):
+                st, ht = int(sn_fib[vi, p]), int(ho_fib[vi, p])
+                fo.write(f"{vi},{vmjd[vi]:.2f},{Time(vmjd[vi],format='mjd').iso[:10]},"
+                         f"{vcfg[vi]},P{p},"
+                         f"{sn_c['Ia'][vi,p]},{sn_c['CC'][vi,p]},{sn_c['TDE'][vi,p]},"
+                         f"{ho_c['Ia'][vi,p]},{ho_c['CC'][vi,p]},{ho_c['TDE'][vi,p]},"
+                         f"{st},{ht},{st+ht},{FIBERS_AVAIL-st-ht}\n")
+    print("visit demand ->", vcsv)
+
+    # (3) host completion ledger (one row per qualifying host)
+    hcsv = os.path.join(CSV_DIR, "07_host_completion_ELAIS-N1.csv")
+    with open(hcsv, "w") as fo:
+        fo.write("id,type,host_Z,visits_needed,visits_done,started,completed\n")
+        for k in np.where(host_ok)[0]:
+            fo.write(f"{k},{typ[k]},{sn['hostz'][k]:.3f},{int(visits_needed[k])},"
+                     f"{int(host_obs[k])},{int(host_obs[k]>0)},{int(host_done[k])}\n")
+    print("host completion ->", hcsv)
 
     # ---- per-pointing table ----
     csv = os.path.join(CSV_DIR, "07_fiber_budget_ELAIS-N1.csv")
@@ -283,10 +326,12 @@ def main():
     # (sky/FluxStd are subtracted from the 1794 available, not shown)
     w = 9.0
     b = np.zeros(nv, float)
-    for arr, col, lab in ((snIa[:, 0], "#d62728", "SN Ia"),
-                          (snCC[:, 0], "#1f77b4", "CC SN"),
-                          (hoIa[:, 0], "#ff7f0e", "Ia host"),
-                          (hoCC[:, 0], "#9ecae1", "CC host")):
+    for arr, col, lab in ((sn_c["Ia"][:, 0],  "#d62728", "SN Ia"),
+                          (sn_c["CC"][:, 0],  "#1f77b4", "CC SN"),
+                          (sn_c["TDE"][:, 0], "#6a3d9a", "TDE"),
+                          (ho_c["Ia"][:, 0],  "#ff7f0e", "Ia host"),
+                          (ho_c["CC"][:, 0],  "#9ecae1", "CC host"),
+                          (ho_c["TDE"][:, 0], "#cab2d6", "TDE host")):
         ax1.bar(dn, arr, width=w, bottom=b, color=col, label=lab)
         b = b + arr
     ax1.set_ylabel("Fibers / pointing", fontsize=18)
@@ -320,9 +365,10 @@ def main():
 
     # remaining hosts histogram by Z mag
     fig2, axh = plt.subplots(figsize=(9, 6))
+    hbins = np.arange(20, 25.51, 0.25)
     hz = sn["hostz"][host_ok]
-    axh.hist(hz, bins=np.arange(20, 25.01, 0.25), color="0.7", label="all Z<25 hosts")
-    axh.hist(sn["hostz"][remaining], bins=np.arange(20, 25.01, 0.25),
+    axh.hist(hz, bins=hbins, color="0.7", label=f"all $Z<{HOST_ZCUT}$ hosts")
+    axh.hist(sn["hostz"][remaining], bins=hbins,
              color="#d62728", alpha=0.8, label="remaining (incomplete) at 2030-05-31")
     axh.set_xlabel("host Roman $Z$ (AB mag)", fontsize=LFS)
     axh.set_ylabel("number of hosts", fontsize=LFS)

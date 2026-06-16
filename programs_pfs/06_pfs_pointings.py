@@ -122,9 +122,9 @@ def main():
         ("TDE (all)",          os.path.join(C, "03_tde_radec_ELAIS-N1.csv")),
         ("TDE (Z<24)",         os.path.join(C, "03_tde_radec_ELAIS-N1_Zlt24.csv")),
         ("Ia host (all)",      args.host_csv),
-        ("Ia host (Z<24.5)",   os.path.join(C, "03_snia_host_radec_ELAIS-N1_Zlt24.5.csv")),
+        ("Ia host (Z<25.5)",   os.path.join(C, "03_snia_host_radec_ELAIS-N1_Zlt25.5.csv")),
         ("CC host (all)",      os.path.join(C, "03_cc_host_radec_ELAIS-N1.csv")),
-        ("CC host (Z<24.5)",   os.path.join(C, "03_cc_host_radec_ELAIS-N1_Zlt24.5.csv")),
+        ("CC host (Z<25.5)",   os.path.join(C, "03_cc_host_radec_ELAIS-N1_Zlt25.5.csv")),
     ]
     cov_csv = os.path.join(C, "06_coverage_ELAIS-N1.csv")
     print("\n  sample                total     A            B          A∪B")
