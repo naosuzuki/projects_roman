@@ -105,6 +105,7 @@ def load_program_sne():
     """Return dict arrays for SNe whose Z087 light curve reaches <24 (program SNe):
     type, ra,dec (SN), hra,hdec (host), hostZ, t1,t2 (active window, shifted MJD)."""
     rec = dict(typ=[], ra=[], dec=[], hra=[], hdec=[], hostz=[], t1=[], t2=[])
+    ntotal = {t: 0 for t in MODELS}        # all simulated Roman transients per class
     for typ, model in MODELS.items():
         for hf in field_files(model, "HEAD"):
             pf = hf.replace("HEAD", "PHOT")
@@ -112,6 +113,7 @@ def load_program_sne():
                 H = fh[1].data; P = fp[1].data
                 if H is None or len(H) == 0:
                     continue
+                ntotal[typ] += len(H)
                 band = np.asarray(P["BAND"]).astype(str)
                 mjd = np.asarray(P["MJD"], float)
                 smag = np.asarray(P["SIM_MAGOBS"], float)
@@ -136,7 +138,7 @@ def load_program_sne():
                     rec["t2"].append(t.max() + SHIFT_DAYS)
     for k in rec:
         rec[k] = np.array(rec[k]) if k != "typ" else np.array(rec[k], dtype=object)
-    return rec
+    return rec, ntotal
 
 
 # ---------------------------------------------------------------- schedule
@@ -171,7 +173,7 @@ def main():
     hours_to_target = build_hours_to_target()
 
     print("Loading program SNe (Z087 light curve < 24) ...")
-    sn = load_program_sne()
+    sn, ntotal = load_program_sne()
     n = len(sn["ra"])
     CLASSES = ["Ia", "CC", "TDE"]
     print("  program SNe: %d  (%s)" % (n, ", ".join(
@@ -262,17 +264,18 @@ def main():
 
     ycsv = os.path.join(CSV_DIR, "07_specz_yield_ELAIS-N1.csv")
     print("\nPFS spec-z yield (live transient observed >=1 visit while Z<24, covered):")
-    print("  class  program  visible  observed  success(obs/visible)")
+    print("  class  Roman  reachZ<24  visible  observed  success(obs/visible)")
     with open(ycsv, "w") as fo:
-        fo.write("class,N_program,N_visible,observed_A,observed_B,observed,success_rate\n")
+        fo.write("class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate\n")
         for c in CLASSES:
             cm = (typ == c)
+            nrom = int(ntotal[c])
             npr, nvis = int(cm.sum()), int((visible & cm).sum())
             oa, ob, ou = (int((sn_obs_A & cm).sum()), int((sn_obs_B & cm).sum()),
                           int((sn_observed & cm).sum()))
             sr = ou / nvis if nvis else 0.0
-            fo.write(f"{c},{npr},{nvis},{oa},{ob},{ou},{sr:.4f}\n")
-            print(f"  {c:3s}   {npr:6d}   {nvis:6d}   {ou:6d}    {100*sr:5.1f}%")
+            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f}\n")
+            print(f"  {c:3s}  {nrom:6d}  {npr:7d}  {nvis:6d}  {ou:6d}   {100*sr:5.1f}%")
     print("specz yield ->", ycsv)
 
     # ---- reproducible CSVs ----
