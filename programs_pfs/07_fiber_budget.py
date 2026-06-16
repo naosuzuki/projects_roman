@@ -437,16 +437,18 @@ def main():
     png = os.path.join(PNG_DIR, "07_fiber_budget_ELAIS-N1.png")
     fig.savefig(png, dpi=140); print("plot ->", png)
 
-    # remaining hosts histogram by Z mag
+    # observed (completed to S/N=5) vs remaining (incomplete) hosts by Z mag.
+    # Draw observed first (light sky blue), then remaining (red, alpha) on top so
+    # the observed histogram stays visible in the background.
     fig2, axh = plt.subplots(figsize=(9, 6))
     hbins = np.arange(20, 25.51, 0.25)
-    hz = sn["hostz"][host_ok]
-    axh.hist(hz, bins=hbins, color="0.7", label=f"all $Z<{HOST_ZCUT}$ hosts")
-    axh.hist(sn["hostz"][remaining], bins=hbins,
-             color="#d62728", alpha=0.8, label="remaining (incomplete) at 2030-05-31")
-    axh.set_xlabel("host Roman $Z$ (AB mag)", fontsize=LFS)
-    axh.set_ylabel("number of hosts", fontsize=LFS)
-    axh.set_title("ELAIS-N1 SN-host galaxies: completed vs remaining", fontsize=TT)
+    axh.hist(sn["hostz"][completed], bins=hbins, color="lightskyblue",
+             label=f"Observed (Reached S/N$=5$, $N={int(completed.sum())}$)")
+    axh.hist(sn["hostz"][remaining], bins=hbins, color="red", alpha=0.65,
+             label=f"Remaining (Incomplete at 2030-05-31, $N={int(remaining.sum())}$)")
+    axh.set_xlabel("Host Roman $Z$ (AB Mag)", fontsize=LFS)
+    axh.set_ylabel("Number of Hosts", fontsize=LFS)
+    axh.set_title("ELAIS-N1 SN-Host Galaxies: Observed Versus Remaining", fontsize=TT)
     axh.tick_params(labelsize=TFS); axh.legend(fontsize=11); axh.grid(True, alpha=0.3)
     png2 = os.path.join(PNG_DIR, "07_remaining_hosts_ELAIS-N1.png")
     fig2.savefig(png2, dpi=140, bbox_inches="tight"); print("plot ->", png2)
