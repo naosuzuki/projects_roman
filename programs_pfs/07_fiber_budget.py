@@ -207,10 +207,16 @@ def main():
     typ = sn["typ"]
     sn_c = {c: np.zeros((nv, 7), int) for c in CLASSES}   # live-SN fibers per class
     ho_c = {c: np.zeros((nv, 7), int) for c in CLASSES}   # host fibers per class
+    sn_obs_A = np.zeros(n, bool)     # observed live (Z<24, covered) on >=1 A visit
+    sn_obs_B = np.zeros(n, bool)     # observed live on >=1 B visit
     for vi, (mjd, cfg) in enumerate(visits):
         psn = pA_sn if cfg == "A" else pB_sn
         pho = pA_ho if cfg == "A" else pB_ho
         active_sn = (mjd >= sn["t1"]) & (mjd <= sn["t2"]) & (psn >= 0)
+        if cfg == "A":
+            sn_obs_A |= active_sn
+        else:
+            sn_obs_B |= active_sn
         # host active: SN already faded (past t2), host qualifies, not done, covered
         faded = mjd > sn["t2"]
         active_ho = faded & host_ok & (~host_done) & (pho >= 0)
@@ -244,19 +250,36 @@ def main():
     print(f"    of which started but unfinished: {int((remaining & started).sum())}")
     print(f"    not yet started (SN still bright / faded late): {int((remaining & ~started).sum())}")
 
+    # ---- successful PFS spec-z of live transients (observed >=1x while Z<24) ----
+    sn_observed = sn_obs_A | sn_obs_B
+    ycsv = os.path.join(CSV_DIR, "07_specz_yield_ELAIS-N1.csv")
+    print("\nSuccessful PFS spec-z (live transient observed >=1 visit while Z<24, covered):")
+    with open(ycsv, "w") as fo:
+        fo.write("class,N_program,observed_A,observed_B,observed_AunionB\n")
+        for c in CLASSES:
+            cm = (typ == c)
+            npr = int(cm.sum())
+            oa, ob, ou = (int((sn_obs_A & cm).sum()), int((sn_obs_B & cm).sum()),
+                          int((sn_observed & cm).sum()))
+            fo.write(f"{c},{npr},{oa},{ob},{ou}\n")
+            print(f"  {c:3s}: program {npr:5d}  observed A={oa:5d}  B={ob:5d}  A+B={ou:5d}")
+    print("specz yield ->", ycsv)
+
     # ---- reproducible CSVs ----
     # (1) program transient catalog (one row per program SN)
     pcsv = os.path.join(CSV_DIR, "07_program_sne_ELAIS-N1.csv")
     with open(pcsv, "w") as fo:
         fo.write("id,type,ra,dec,host_ra,host_dec,host_Z,t1_mjd,t2_mjd,"
-                 "pA_sn,pB_sn,pA_host,pB_host,host_target,host_visits_needed\n")
+                 "pA_sn,pB_sn,pA_host,pB_host,host_target,host_visits_needed,"
+                 "observed_A,observed_B,observed\n")
         for k in range(n):
             vn = int(visits_needed[k]) if host_ok[k] else -1
             fo.write(f"{k},{typ[k]},{sn['ra'][k]:.5f},{sn['dec'][k]:.5f},"
                      f"{sn['hra'][k]:.5f},{sn['hdec'][k]:.5f},{sn['hostz'][k]:.3f},"
                      f"{sn['t1'][k]:.2f},{sn['t2'][k]:.2f},"
                      f"{pA_sn[k]},{pB_sn[k]},{pA_ho[k]},{pB_ho[k]},"
-                     f"{int(host_ok[k])},{vn}\n")
+                     f"{int(host_ok[k])},{vn},"
+                     f"{int(sn_obs_A[k])},{int(sn_obs_B[k])},{int(sn_observed[k])}\n")
     print("program SNe ->", pcsv)
 
     # (2) per-visit per-pointing demand (one row per visit x pointing)
