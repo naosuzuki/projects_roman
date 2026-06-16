@@ -268,7 +268,7 @@ def main():
     print(f"  class  Roman  reachZ<24  visible  observed  success  net(x{WEATHER:.2f} wx)")
     with open(ycsv, "w") as fo:
         fo.write("class,N_roman,N_program,N_visible,observed_A,observed_B,observed,"
-                 "success_rate,net_success\n")
+                 "success_rate,net_observed,net_success\n")
         for c in CLASSES:
             cm = (typ == c)
             nrom = int(ntotal[c])
@@ -277,9 +277,10 @@ def main():
                           int((sn_observed & cm).sum()))
             sr = ou / nvis if nvis else 0.0
             net = sr * WEATHER
-            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f},{net:.4f}\n")
+            net_obs = int(round(ou * WEATHER))     # expected after 70% weather loss
+            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f},{net_obs},{net:.4f}\n")
             print(f"  {c:3s}  {nrom:6d}  {npr:7d}  {nvis:6d}  {ou:6d}   "
-                  f"{100*sr:5.1f}%   {100*net:5.1f}%")
+                  f"{100*sr:5.1f}%   {net_obs:5d} ({100*net:4.1f}%)")
     print("specz yield ->", ycsv)
 
     # ---- reproducible CSVs ----
