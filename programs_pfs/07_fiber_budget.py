@@ -320,7 +320,8 @@ def main():
     with open(pcsv, "w") as fo:
         fo.write("id,type,z,ra,dec,host_ra,host_dec,host_Z,t1_mjd,t2_mjd,"
                  "pA_sn,pB_sn,pA_host,pB_host,host_target,host_visits_needed,"
-                 "observed_A,observed_B,observed\n")
+                 "observed_A,observed_B,observed,"
+                 "host_visits_done,host_started,host_completed\n")
         for k in range(n):
             vn = int(visits_needed[k]) if host_ok[k] else -1
             fo.write(f"{k},{typ[k]},{sn['z'][k]:.5f},{sn['ra'][k]:.5f},{sn['dec'][k]:.5f},"
@@ -328,7 +329,8 @@ def main():
                      f"{sn['t1'][k]:.2f},{sn['t2'][k]:.2f},"
                      f"{pA_sn[k]},{pB_sn[k]},{pA_ho[k]},{pB_ho[k]},"
                      f"{int(host_ok[k])},{vn},"
-                     f"{int(sn_obs_A[k])},{int(sn_obs_B[k])},{int(sn_observed[k])}\n")
+                     f"{int(sn_obs_A[k])},{int(sn_obs_B[k])},{int(sn_observed[k])},"
+                     f"{int(host_obs[k])},{int(host_obs[k]>0)},{int(host_done[k])}\n")
     print("program SNe ->", pcsv)
 
     # (2) per-visit per-pointing demand (one row per visit x pointing)
