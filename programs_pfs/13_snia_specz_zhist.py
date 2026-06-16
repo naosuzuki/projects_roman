@@ -46,7 +46,7 @@ def main():
     bins = np.arange(0.0, np.ceil(zo.max() * 10) / 10 + 0.051, 0.05)
     counts, edges = np.histogram(zo, bins)
     centers = 0.5 * (edges[:-1] + edges[1:])
-    bw = (edges[1] - edges[0]) * 0.85         # narrower than the bin -> small gap
+    bw = (edges[1] - edges[0]) * 0.93         # slightly narrower than the bin -> small gap
     fig, ax = plt.subplots(figsize=(9, 6))
     # nested bars: draw 100% first, then 80%, then 70% on top, so each bin shows
     # red (0-70%), a green band (70-80%) and a blue band (80-100%)
