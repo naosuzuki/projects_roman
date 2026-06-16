@@ -1,4 +1,4 @@
-class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate,net_observed,net_success
-Ia,13094,3091,1416,760,714,971,0.6857,777,0.5486
-CC,18774,2769,1476,797,779,1018,0.6897,814,0.5518
-TDE,21,7,5,2,3,3,0.6000,2,0.4800
+class,N_roman,N_program,N_visible,observed_A,observed_B,observed,success_rate,net_obs_w80,net_rate_w80,net_obs_w70,net_rate_w70
+Ia,13094,3091,1416,760,714,971,0.6857,777,0.5486,680,0.4800
+CC,18774,2769,1476,797,779,1018,0.6897,814,0.5518,713,0.4828
+TDE,21,7,5,2,3,3,0.6000,2,0.4800,2,0.4200

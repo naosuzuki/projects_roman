@@ -45,7 +45,7 @@ SN_ZCUT = 24.0
 HOST_ZCUT = 25.5
 SN_TARGET = 5.0              # target host S/N at 10-pix binning
 NPIX_BIN = 10
-WEATHER = 0.80               # fraction of usable (clear) nights at Maunakea
+WEATHERS = (0.80, 0.70)      # clear-night fractions at Maunakea to tabulate
 SHIFT_DAYS = Time("2028-06-01").mjd - Time("2029-01-01").mjd   # -214
 SURVEY_START = Time("2028-06-01").mjd
 SURVEY_END = Time("2030-05-31").mjd
@@ -265,10 +265,12 @@ def main():
 
     ycsv = os.path.join(CSV_DIR, "07_specz_yield_ELAIS-N1.csv")
     print("\nPFS spec-z yield (live transient observed >=1 visit while Z<24, covered):")
-    print(f"  class  Roman  reachZ<24  visible  observed  success  net(x{WEATHER:.2f} wx)")
+    wcols = "".join(f",net_obs_w{int(100*w)},net_rate_w{int(100*w)}" for w in WEATHERS)
+    whdr = "  ".join(f"net(x{w:.2f})" for w in WEATHERS)
+    print(f"  class  Roman  reachZ<24  visible  observed  success  {whdr}")
     with open(ycsv, "w") as fo:
         fo.write("class,N_roman,N_program,N_visible,observed_A,observed_B,observed,"
-                 "success_rate,net_observed,net_success\n")
+                 "success_rate" + wcols + "\n")
         for c in CLASSES:
             cm = (typ == c)
             nrom = int(ntotal[c])
@@ -276,11 +278,14 @@ def main():
             oa, ob, ou = (int((sn_obs_A & cm).sum()), int((sn_obs_B & cm).sum()),
                           int((sn_observed & cm).sum()))
             sr = ou / nvis if nvis else 0.0
-            net = sr * WEATHER
-            net_obs = int(round(ou * WEATHER))     # expected after 70% weather loss
-            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f},{net_obs},{net:.4f}\n")
+            extra, nets = "", []
+            for w in WEATHERS:
+                no, nr = int(round(ou * w)), sr * w     # expected count, rate after weather
+                extra += f",{no},{nr:.4f}"
+                nets.append(f"{no} ({100*nr:4.1f}%)")
+            fo.write(f"{c},{nrom},{npr},{nvis},{oa},{ob},{ou},{sr:.4f}{extra}\n")
             print(f"  {c:3s}  {nrom:6d}  {npr:7d}  {nvis:6d}  {ou:6d}   "
-                  f"{100*sr:5.1f}%   {net_obs:5d} ({100*net:4.1f}%)")
+                  f"{100*sr:5.1f}%   " + "  ".join(nets))
     print("specz yield ->", ycsv)
 
     # ---- reproducible CSVs ----
