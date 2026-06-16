@@ -252,17 +252,27 @@ def main():
 
     # ---- successful PFS spec-z of live transients (observed >=1x while Z<24) ----
     sn_observed = sn_obs_A | sn_obs_B
+    # "visible from Subaru" = the Z<24 window overlaps an observable (Feb-Aug)
+    # night within the survey -> the correct denominator for the success rate.
+    surv_days = np.arange(int(SURVEY_START), int(SURVEY_END) + 1)
+    surv_mon = np.array([Time(int(d), format="mjd").datetime.month for d in surv_days])
+    obs_mjds = surv_days[np.isin(surv_mon, list(OBS_MONTHS))]
+    visible = (np.searchsorted(obs_mjds, sn["t2"], "right")
+               > np.searchsorted(obs_mjds, sn["t1"], "left"))
+
     ycsv = os.path.join(CSV_DIR, "07_specz_yield_ELAIS-N1.csv")
-    print("\nSuccessful PFS spec-z (live transient observed >=1 visit while Z<24, covered):")
+    print("\nPFS spec-z yield (live transient observed >=1 visit while Z<24, covered):")
+    print("  class  program  visible  observed  success(obs/visible)")
     with open(ycsv, "w") as fo:
-        fo.write("class,N_program,observed_A,observed_B,observed_AunionB\n")
+        fo.write("class,N_program,N_visible,observed_A,observed_B,observed,success_rate\n")
         for c in CLASSES:
             cm = (typ == c)
-            npr = int(cm.sum())
+            npr, nvis = int(cm.sum()), int((visible & cm).sum())
             oa, ob, ou = (int((sn_obs_A & cm).sum()), int((sn_obs_B & cm).sum()),
                           int((sn_observed & cm).sum()))
-            fo.write(f"{c},{npr},{oa},{ob},{ou}\n")
-            print(f"  {c:3s}: program {npr:5d}  observed A={oa:5d}  B={ob:5d}  A+B={ou:5d}")
+            sr = ou / nvis if nvis else 0.0
+            fo.write(f"{c},{npr},{nvis},{oa},{ob},{ou},{sr:.4f}\n")
+            print(f"  {c:3s}   {npr:6d}   {nvis:6d}   {ou:6d}    {100*sr:5.1f}%")
     print("specz yield ->", ycsv)
 
     # ---- reproducible CSVs ----

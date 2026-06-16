@@ -1,4 +1,4 @@
-class,N_program,observed_A,observed_B,observed_AunionB
-Ia,3091,760,714,971
-CC,2769,797,779,1018
-TDE,7,2,3,3
+class,N_program,N_visible,observed_A,observed_B,observed,success_rate
+Ia,3091,1416,760,714,971,0.6857
+CC,2769,1476,797,779,1018,0.6897
+TDE,7,5,2,3,3,0.6000
