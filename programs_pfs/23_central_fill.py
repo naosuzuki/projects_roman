@@ -60,7 +60,7 @@ def main():
     def sq(d): return [(d * np.cos(np.radians(45 + 90 * k)), d * np.sin(np.radians(45 + 90 * k))) for k in range(4)]
     EXAMPLES = [("1 pointing (centre)", [(0.0, 0.0)]),
                 ("3 pointings (triangle, $d=0.43^\\circ$)", tri(0.425)),
-                ("4 pointings (square, $d=0.60^\\circ$)", sq(0.60))]
+                ("Config G: 4 pointings (square, $d=0.60^\\circ$)", sq(0.60))]
 
     def covmask(cens):
         c = np.zeros(nh, bool)

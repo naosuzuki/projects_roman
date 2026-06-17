@@ -94,7 +94,7 @@ def main():
     axm.scatter(ra[covered], dec[covered], s=5, c="#2ca02c", alpha=0.5, linewidths=0, label="Covered")
     axm.scatter(ra[~covered], dec[~covered], s=6, c="#d62728", alpha=0.6, linewidths=0, label="Missed")
     for grp, col, lab in ((ring, "#1f6fe0", "Config E ring (12)"),
-                          (central, "#9467bd", "Central fill (4)")):
+                          (central, "#9467bd", "Config G central (4)")):
         first = True
         for xc, yc in grp:
             sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
@@ -106,7 +106,7 @@ def main():
     axm.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label=f"Footprint edge")
     axm.set_aspect(1.0 / cosd); axm.invert_xaxis()
     axm.set_xlabel("RA (deg)", fontsize=16); axm.set_ylabel("Dec (deg)", fontsize=16)
-    axm.set_title(f"Config E (12) + 4 Central = 16 Fields  "
+    axm.set_title(f"Config E (12) + Config G (4 Central) = 16 Fields  "
                   f"(coverage {100*covered.sum()/n:.0f}\\%)", fontsize=14)
     axm.tick_params(labelsize=12); axm.legend(fontsize=11, loc="upper right"); axm.grid(True, alpha=0.25)
 
