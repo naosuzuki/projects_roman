@@ -38,6 +38,14 @@ def ring_centers(phase_deg):
              R_RING * np.sin(np.radians(phase_deg + 360 * k / M))) for k in range(M)]
 
 
+def core_centers():            # 7-pointing A/B core flower (covers the inner hosts)
+    sp = np.sqrt(3) * R
+    c = [(0.0, 0.0)]
+    for ang in (90, 150, 210, 270, 330, 30):
+        a = np.radians(ang); c.append((sp * np.cos(a), sp * np.sin(a)))
+    return c
+
+
 def main():
     d = np.genfromtxt(CSV, delimiter=",", names=True, dtype=None, encoding="utf-8")
     htar = np.asarray(d["host_target"]).astype(int)
@@ -52,9 +60,11 @@ def main():
     xi = (hra - RA0) * cosd; eta = hdec - DEC0
     rneed = np.maximum(1, np.ceil(vneed - vdone)).astype(int)
     rem = (htar == 1) & (comp == 0)
-    outer = rem & ~((pAh >= 0) | (pBh >= 0))
+    inA = (pAh >= 0); inB = (pBh >= 0)
+    inner = rem & (inA | inB)               # remaining hosts in the A/B core
+    outer = rem & ~(inA | inB)              # remaining hosts in the outskirts
     pts = np.column_stack([xi, eta])
-    nout = int(outer.sum())
+    nout = int(outer.sum()); ninn = int(inner.sum())
 
     EC, FC = ring_centers(0.0), ring_centers(15.0)
     nE = np.zeros(len(pts), int); nF = np.zeros(len(pts), int)
@@ -81,12 +91,18 @@ def main():
             hrs = nEr * nE + nFr * nF
             rec.append(int((outer & (hrs >= rneed)).sum()))
         return np.array(rec)
-    rec_ef = recovered("EF"); rec_e = recovered("E")
+    rec_ef = recovered("EF")
     exp = M * rounds
-    print("\n  exposures  E-only   E/F-alternating")
+    # inner hosts recovered by re-observing the A/B core (alternate A,B; 7 pts/round)
+    nA, nB = inA.astype(int), inB.astype(int)
+    rec_in = np.array([int((inner & (((Rn + 1) // 2) * nA + (Rn // 2) * nB >= rneed)).sum())
+                       for Rn in rounds])
+    exp_in = 7 * rounds
+    print(f"  inner hosts {ninn}; outskirts {nout}")
+    print("  outskirts via E/F        inner via A/B core")
     for Rn in (2, 4, 6, 8):
-        print(f"   {M*Rn:5d}     {rec_e[Rn]:4d} ({100*rec_e[Rn]/nout:2.0f}%)  "
-              f"{rec_ef[Rn]:4d} ({100*rec_ef[Rn]/nout:2.0f}%)")
+        print(f"   {M*Rn:3d}exp -> {rec_ef[Rn]:4d} ({100*rec_ef[Rn]/nout:2.0f}%)   "
+              f"{7*Rn:3d}exp -> {rec_in[Rn]:4d} ({100*rec_in[Rn]/ninn:2.0f}%)")
 
     # ---- figure ----
     import matplotlib
@@ -107,8 +123,13 @@ def main():
     def t2sky(x, y):
         return RA0 + x / cosd, DEC0 + y
     ra, dec = t2sky(xi, eta)
+    axm.scatter(ra[inner], dec[inner], s=6, c="#1f6fe0", alpha=0.5, linewidths=0,
+                label="Remaining (inner)")
     axm.scatter(ra[outer], dec[outer], s=6, c="0.5", alpha=0.5, linewidths=0,
                 label="Remaining (outskirts)")
+    for (xc, yc) in core_centers():
+        sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+        axm.add_patch(Polygon(sky, closed=True, fill=False, edgecolor="#9ecae1", lw=1.2, alpha=0.85))
     for grp, col, lab in ((EC, "#2ca02c", "Config E ring ($0^\\circ$)"),
                           (FC, "#d62728", "Config F ring ($15^\\circ$)")):
         first = True
@@ -125,13 +146,13 @@ def main():
     axm.set_title("Config E ($0^\\circ$) + Config F ($15^\\circ$) Interleaved Rings", fontsize=14)
     axm.tick_params(labelsize=12); axm.legend(fontsize=11, loc="upper right"); axm.grid(True, alpha=0.25)
 
-    axr.plot(exp, 100 * rec_ef / nout, "-o", color="#1f6fe0", ms=4, label="E/F alternating")
-    axr.plot(exp, 100 * rec_e / nout, "-s", color="#2ca02c", ms=4, label="Config E only")
-    axr.axhline(100 * covEF.sum() / nout, color="0.6", ls=":", lw=1,
-                label=f"E+F coverage ceiling {100*covEF.sum()/nout:.0f}%")
+    axr.plot(exp, 100 * rec_ef / nout, "-o", color="#d62728", ms=4,
+             label=f"Outskirts via E/F ($N={nout}$)")
+    axr.plot(exp_in, 100 * rec_in / ninn, "-s", color="#1f6fe0", ms=4,
+             label=f"Inner via A/B core ($N={ninn}$)")
     axr.set_xlabel("Total 1-Hour Exposures", fontsize=16)
-    axr.set_ylabel("Outskirt Hosts Recovered (%)", fontsize=16)
-    axr.set_title("Recovery vs Exposure: E/F Alternating", fontsize=15)
+    axr.set_ylabel("Remaining Hosts Recovered (%)", fontsize=16)
+    axr.set_title("Recovery vs Exposure: Inner and Outskirts", fontsize=15)
     axr.set_xlim(0, 100); axr.set_ylim(0, 100)
     axr.tick_params(labelsize=12); axr.legend(fontsize=12, loc="lower right"); axr.grid(True, alpha=0.3)
 
