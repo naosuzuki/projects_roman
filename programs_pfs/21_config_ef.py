@@ -23,7 +23,7 @@ CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 RA0, DEC0 = 242.498, 54.497
 FOV = 1.3
 R = FOV / 2.0
-R_RING = 1.6
+R_RING = 1.5        # optimized for E+F: 100% FoV fill (no empty space), 95% coverage
 M = 12
 R_FOOT = 2.09
 

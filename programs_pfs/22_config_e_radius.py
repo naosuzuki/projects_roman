@@ -52,10 +52,11 @@ def main():
     inhex = Path(hexagon(0, 0)).contains_points(np.column_stack([gx, gy]))
     gx, gy = gx[inhex], gy[inhex]
 
-    radii = np.round(np.arange(1.30, 2.001, 0.025), 3)
+    radii = np.round(np.arange(1.25, 2.001, 0.025), 3)
     cov, fill = [], []
     for rr in radii:
-        cen = [(rr * np.cos(2 * np.pi * k / M), rr * np.sin(2 * np.pi * k / M)) for k in range(M)]
+        cen = [(rr * np.cos(np.radians(p + 360 * k / M)), rr * np.sin(np.radians(p + 360 * k / M)))
+               for p in (0.0, 15.0) for k in range(M)]      # Config E + Config F = 24 pointings
         ncov = np.zeros(len(pts), int); fr = []
         for xc, yc in cen:
             ncov += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
@@ -64,17 +65,13 @@ def main():
         fill.append(100 * np.mean(fr))
     cov, fill = np.array(cov), np.array(fill)
     prod = cov * fill / 100.0
-    r_bal = radii[np.argmax(prod)]                       # balanced optimum
-    ok = fill >= 90
-    r_cov90 = radii[ok][np.argmax(cov[ok])]              # max coverage with fill>=90
-    r_full = radii[fill >= 99.5].max()                   # largest fully-filled ring
-    print(f"outskirt hosts: {nout}")
-    print(f"  balanced optimum (max coverage*fill): r = {r_bal:.2f} deg  "
+    r_nospill = radii[fill >= 99.5].max()                # largest ring with no empty space
+    r_bal = radii[np.argmax(prod)]                       # balanced (coverage*fill) optimum
+    print(f"outskirt hosts: {nout}  (Config E+F = 24 pointings)")
+    print(f"  no empty space (fill=100%), max coverage: r = {r_nospill:.2f} deg  "
+          f"(cov {cov[radii==r_nospill][0]:.0f}%, fill 100%)")
+    print(f"  balanced optimum (max coverage*fill):     r = {r_bal:.2f} deg  "
           f"(cov {cov[radii==r_bal][0]:.0f}%, fill {fill[radii==r_bal][0]:.0f}%)")
-    print(f"  max coverage with fill>=90%:          r = {r_cov90:.2f} deg  "
-          f"(cov {cov[radii==r_cov90][0]:.0f}%, fill {fill[radii==r_cov90][0]:.0f}%)")
-    print(f"  100% filled (no spillover):           r = {r_full:.2f} deg  "
-          f"(cov {cov[radii==r_full][0]:.0f}%, fill 100%)")
 
     # ---- figure ----
     import matplotlib
@@ -93,13 +90,12 @@ def main():
     ax.plot(radii, cov, "-o", color="#1f6fe0", ms=3.5, label="Coverage of outskirt hosts")
     ax.plot(radii, fill, "-s", color="#d62728", ms=3.5, label="Mean FoV fill (inside footprint)")
     ax.plot(radii, prod, "-", color="#2ca02c", lw=2.2, label="Coverage $\\times$ fill (figure of merit)")
-    ax.axhline(90, color="0.6", ls=":", lw=1)
-    ax.axvline(r_bal, color="0.4", ls="--", lw=1.3)
-    ax.text(r_bal, 4, f"  optimum $r={r_bal:.2f}^\\circ$", rotation=90, va="bottom",
-            ha="left", fontsize=12, color="0.3")
-    ax.set_xlabel("Config E Ring Radius (deg)", fontsize=17)
+    ax.axvline(r_nospill, color="0.4", ls="--", lw=1.3)
+    ax.text(r_nospill, 4, f"  no empty space, $r={r_nospill:.2f}^\\circ$ (cov {cov[radii==r_nospill][0]:.0f}\\%)",
+            rotation=90, va="bottom", ha="left", fontsize=12, color="0.3")
+    ax.set_xlabel("Config E+F Ring Radius (deg)", fontsize=17)
     ax.set_ylabel("Percent", fontsize=17)
-    ax.set_title("Optimizing the Config E Ring Radius (12 Pointings)", fontsize=15)
+    ax.set_title("Optimizing the Config E+F Ring Radius (24 Pointings)", fontsize=15)
     ax.set_ylim(0, 105); ax.set_xlim(radii.min(), radii.max())
     ax.tick_params(labelsize=13); ax.legend(fontsize=12, loc="lower center"); ax.grid(True, alpha=0.3)
 
