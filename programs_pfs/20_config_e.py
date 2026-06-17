@@ -117,9 +117,6 @@ def main():
                 linewidths=0, label="Remaining (core)")
     axm.scatter(ra[outer], dec[outer], s=6, c="#d62728", alpha=0.55,
                 linewidths=0, label="Remaining (outskirts)")
-    for (xc, yc) in core_centers():
-        sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
-        axm.add_patch(Polygon(sky, closed=True, fill=False, edgecolor="#1f6fe0", lw=1.4, alpha=0.7))
     first = True
     for (xc, yc) in ec:
         sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
@@ -145,7 +142,7 @@ def main():
     axr.set_xlabel("Total 1-Hour Exposures (Config E)", fontsize=16)
     axr.set_ylabel("Outskirt Hosts Recovered (%)", fontsize=16)
     axr.set_title("Config E Recovery vs Exposure", fontsize=15)
-    axr.set_xlim(0, M * Rmax); axr.set_ylim(0, 100)
+    axr.set_xlim(0, 100); axr.set_ylim(0, 100)
     axr.tick_params(labelsize=12); axr.legend(fontsize=12, loc="lower right"); axr.grid(True, alpha=0.3)
 
     png = os.path.join(PNG_DIR, "20_config_e_ELAIS-N1.png")
