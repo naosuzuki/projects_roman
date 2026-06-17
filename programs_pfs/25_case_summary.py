@@ -76,8 +76,9 @@ def main():
         ("6  E+G  (16 fields)",  ring(1.5, 0) + central4()),
     ]
     print(f"remaining hosts: {n}\n")
-    print("Case Config             Fields  Cover   1visit  2visit  3visit")
+    print("Case Config             Fields  Cover   1visit (h)   2visit (h)   3visit (h)")
     for lab, cens in CASES:
+        nf = len(cens)
         ncov = np.zeros(n, int)
         for xc, yc in cens:
             ncov += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
@@ -85,8 +86,9 @@ def main():
         c1 = (1 * ncov >= rn) & cover
         c2 = (2 * ncov >= rn) & cover
         c3 = (3 * ncov >= rn) & cover
-        print(f"{lab:22s} {len(cens):4d}   {100*cover.mean():4.0f}%   "
-              f"{100*c1.mean():4.0f}%   {100*c2.mean():4.0f}%   {100*c3.mean():4.0f}%")
+        print(f"{lab:22s} {nf:4d}   {100*cover.mean():4.0f}%   "
+              f"{100*c1.mean():3.0f}% ({nf}h)  {100*c2.mean():3.0f}% ({2*nf}h)  "
+              f"{100*c3.mean():3.0f}% ({3*nf}h)")
 
 
 if __name__ == "__main__":
