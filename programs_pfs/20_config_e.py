@@ -126,8 +126,10 @@ def main():
         axm.add_patch(Polygon(sky, closed=True, fill=False, edgecolor="#2ca02c",
                               lw=1.8, alpha=0.95, label=("Config E ring (12)" if first else None)))
         first = False
-    fra, fdec = t2sky(R_FOOT, 0)
-    axm.add_patch(Circle((RA0, DEC0), R_FOOT / cosd, fill=False, ec="0.4", ls="--", lw=1))
+    th = np.linspace(0, 2 * np.pi, 240)
+    fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
+    axm.plot(fra, fdec, color="0.4", ls="--", lw=1.2,
+             label=f"Footprint edge ($r={R_FOOT}^\\circ$)")
     axm.set_aspect(1.0 / cosd); axm.invert_xaxis()
     axm.set_xlabel("RA (deg)", fontsize=16); axm.set_ylabel("Dec (deg)", fontsize=16)
     axm.set_title(f"Configuration E: Overlapping Outskirt Ring (r={R_RING}$^\\circ$, {M} pointings)",
