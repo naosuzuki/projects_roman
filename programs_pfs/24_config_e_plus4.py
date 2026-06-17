@@ -116,7 +116,7 @@ def main():
     axr.set_xlabel("Total 1-Hour Exposures", fontsize=16)
     axr.set_ylabel("Remaining Hosts Recovered (%)", fontsize=16)
     axr.set_title("Time Evolution: Hosts Recovered vs Exposure", fontsize=15)
-    axr.set_xlim(0, exp.max()); axr.set_ylim(0, 100)
+    axr.set_xlim(0, 100); axr.set_ylim(0, 100)
     axr.tick_params(labelsize=12); axr.legend(fontsize=12, loc="lower right"); axr.grid(True, alpha=0.3)
 
     png = os.path.join(PNG_DIR, "24_config_e_plus4_ELAIS-N1.png")
