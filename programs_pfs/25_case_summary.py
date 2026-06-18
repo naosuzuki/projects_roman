@@ -14,6 +14,7 @@ import numpy as np
 from matplotlib.path import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 RA0, DEC0 = 242.498, 54.497
 FOV = 1.3
@@ -77,19 +78,54 @@ def main():
     ]
     print(f"remaining hosts: {n}  (total spec-z = number reaching S/N=5)\n")
     print("Case Config             Fields  Cover    1visit (h)        2visit (h)        3visit (h)")
+    results = []
     for lab, cens in CASES:
         nf = len(cens)
         ncov = np.zeros(n, int)
         for xc, yc in cens:
             ncov += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
         cover = (ncov > 0)
-        c1 = int(((1 * ncov >= rn) & cover).sum())
-        c2 = int(((2 * ncov >= rn) & cover).sum())
-        c3 = int(((3 * ncov >= rn) & cover).sum())
-        print(f"{lab:22s} {nf:4d}   {100*cover.mean():4.0f}%   "
-              f"{c1:4d} ({100*c1/n:2.0f}%, {nf}h, {c1/nf:4.1f}/h)  "
-              f"{c2:4d} ({100*c2/n:2.0f}%, {2*nf}h, {c2/(2*nf):4.1f}/h)  "
-              f"{c3:4d} ({100*c3/n:2.0f}%, {3*nf}h, {c3/(3*nf):4.1f}/h)")
+        cnt = [int(((v * ncov >= rn) & cover).sum()) for v in (1, 2, 3)]
+        hrs = [nf, 2 * nf, 3 * nf]
+        results.append((lab, hrs, cnt))
+        print(f"{lab:22s} {nf:4d}   {100*cover.mean():4.0f}%   " +
+              "  ".join(f"{cnt[i]:4d} ({100*cnt[i]/n:2.0f}%, {hrs[i]}h, {cnt[i]/hrs[i]:4.1f}/h)"
+                        for i in range(3)))
+
+    # ---- plot: host spec-z acquired vs total exposure hours ----
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import font_manager as fm
+    for fnt in ("Times New Roman.ttf", "Times New Roman Bold.ttf", "Times New Roman Italic.ttf"):
+        fp = f"/System/Library/Fonts/Supplemental/{fnt}"
+        if os.path.exists(fp):
+            fm.fontManager.addfont(fp)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "stix"
+
+    colors = ["#d62728", "#2ca02c", "#1f6fe0", "#9467bd", "#ff7f0e"]
+    fig, ax = plt.subplots(figsize=(9.5, 6.5))
+    for (lab, hrs, cnt), col in zip(results, colors):
+        name = "Case " + lab.split("(")[0].strip().replace("  ", " ")
+        ax.plot(hrs, cnt, "-o", color=col, ms=7, lw=1.8, label=name)
+        for h, c, v in zip(hrs, cnt, ("1", "2", "3")):
+            ax.annotate(v, (h, c), textcoords="offset points", xytext=(5, -10),
+                        fontsize=9, color=col)
+    ax.set_xlabel("Total Exposure Time (hours)", fontsize=17)
+    ax.set_ylabel("Host Spec-$z$ Acquired (Reaching S/N $=5$)", fontsize=17)
+    ax.set_title("Phase III Host Spec-$z$ vs Exposure Time, by Case  "
+                 "(markers = 1, 2, 3 visits)", fontsize=14)
+    secax = ax.secondary_yaxis("right", functions=(lambda y: 100 * y / n, lambda p: p * n / 100))
+    secax.set_ylabel("Fraction of 2270 Remaining Hosts (%)", fontsize=14)
+    ax.tick_params(labelsize=12); secax.tick_params(labelsize=11)
+    ax.set_xlim(0, 90); ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=12, loc="lower right", title="(slope from origin = spec-$z$/h)")
+
+    png = os.path.join(PNG_DIR, "25_case_summary_ELAIS-N1.png")
+    fig.tight_layout(); fig.savefig(png, dpi=140)
+    print("plot ->", png)
 
 
 if __name__ == "__main__":
