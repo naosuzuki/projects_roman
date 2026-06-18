@@ -87,8 +87,9 @@ def main():
         c2 = int(((2 * ncov >= rn) & cover).sum())
         c3 = int(((3 * ncov >= rn) & cover).sum())
         print(f"{lab:22s} {nf:4d}   {100*cover.mean():4.0f}%   "
-              f"{c1:4d} ({100*c1/n:2.0f}%, {nf}h)  {c2:4d} ({100*c2/n:2.0f}%, {2*nf}h)  "
-              f"{c3:4d} ({100*c3/n:2.0f}%, {3*nf}h)")
+              f"{c1:4d} ({100*c1/n:2.0f}%, {nf}h, {c1/nf:4.1f}/h)  "
+              f"{c2:4d} ({100*c2/n:2.0f}%, {2*nf}h, {c2/(2*nf):4.1f}/h)  "
+              f"{c3:4d} ({100*c3/n:2.0f}%, {3*nf}h, {c3/(3*nf):4.1f}/h)")
 
 
 if __name__ == "__main__":
