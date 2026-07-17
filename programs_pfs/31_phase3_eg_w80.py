@@ -3,7 +3,9 @@
 31_phase3_eg_w80.py -- 80%-weather version of the Phase III E+G ledger (Table 9):
 the main survey completes only 80% of the hosts (Ia 1329, CC 842, TDE 2,
 matching the Net-80% column of the host-yield table), so the Phase III target
-list is larger; the E+G configuration (Case 6) is then applied to it.
+list is larger; the Phase III visits then alternate configurations: visit 1 uses
+Configuration alpha (E+G) and visit 2 uses Configuration beta (alpha rotated
+15 deg), whose fields fall on alpha's gaps.
 
 Model (deterministic, reproducible):
   * Completed(80%) = round(0.8 x Completed) per class. The demoted hosts are the
@@ -40,11 +42,11 @@ def hexagon(xc, yc):
     return np.column_stack([xc + R * np.cos(a), yc + R * np.sin(a)])
 
 
-def eg_centers():
-    ring = [(R_RING * np.cos(np.radians(360 * k / M)),
-             R_RING * np.sin(np.radians(360 * k / M))) for k in range(M)]
-    central = [(0.60 * np.cos(np.radians(45 + 90 * k)),
-                0.60 * np.sin(np.radians(45 + 90 * k))) for k in range(4)]
+def config(rot):
+    ring = [(R_RING * np.cos(np.radians(rot + 360 * k / M)),
+             R_RING * np.sin(np.radians(rot + 360 * k / M))) for k in range(M)]
+    central = [(0.60 * np.cos(np.radians(rot + 45 + 90 * k)),
+                0.60 * np.sin(np.radians(rot + 45 + 90 * k))) for k in range(4)]
     return ring + central
 
 
@@ -62,9 +64,12 @@ def main():
     pts = np.column_stack([(hra - RA0) * cosd, hdec - DEC0])
     n = len(pts)
 
-    ncov = np.zeros(n, int)
-    for xc, yc in eg_centers():
-        ncov += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
+    nA = np.zeros(n, int)
+    nB = np.zeros(n, int)
+    for xc, yc in config(0.0):
+        nA += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
+    for xc, yc in config(15.0):
+        nB += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
 
     # demote the weather-fragile completed hosts (largest vneed) to hit 0.8x
     comp80 = comp.copy()
@@ -87,10 +92,10 @@ def main():
 
     rem = htar & ~comp80
     out = os.path.join(CSV_DIR, "31_phase3_eg_w80_ELAIS-N1.csv")
-    print("Class  hostZ<25.5  compl80  unobs  SN<5  remaining  P3visit1  P3visit2")
+    print("Class  hostZ<25.5  compl80  unobs  SN<5  remaining  v1(alpha)  v2(beta)")
     with open(out, "w") as fo:
         fo.write("class,N_host_zcut,N_completed80,N_unobserved,N_started_below,"
-                 "N_remaining,EG_visit1,EG_visit2\n")
+                 "N_remaining,visit1_alpha,visit2_beta\n")
         tots = np.zeros(7, int)
         for c in CLASSES:
             m = htar & (typ == c)
@@ -98,8 +103,8 @@ def main():
             r = m & ~comp80
             nun = int((r & ~start).sum())
             nsb = int((r & start).sum())          # incl. demoted (they were started)
-            v1 = int((r & (1 * ncov >= rneed)).sum())
-            v2 = int((r & (2 * ncov >= rneed)).sum())
+            v1 = int((r & (nA >= rneed)).sum())
+            v2 = int((r & (nA + nB >= rneed)).sum())
             tots += (npool, nc, nun, nsb, nun + nsb, v1, v2)
             fo.write(f"{c},{npool},{nc},{nun},{nsb},{nun+nsb},{v1},{v2}\n")
             print(f"{c:5s}  {npool:9d}  {nc:7d}  {nun:5d}  {nsb:4d}  "
