@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
-CASES = [(1.0, "SNIa 100% (no weather loss)", "blue"),
+CASES = [(1.0, "SNIa 100% (no loss)", "blue"),
          (0.8, "SNIa 80% weather",            "g"),
          (0.7, "SNIa 70% weather",            "red")]
 W = 0.8                                        # weather factor for host/ELG

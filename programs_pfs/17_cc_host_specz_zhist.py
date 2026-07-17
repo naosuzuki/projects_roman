@@ -3,7 +3,7 @@
 17_cc_host_specz_zhist.py -- redshift histogram of core-collapse SN HOST
 galaxies that obtain a successful PFS spectroscopic redshift (host integrated to
 S/N=5 at 10-pixel binning) in the ELAIS-N1 survey, for three weather-factor
-cases: 100% (no weather loss), 80%, and 70% of usable nights. (CC analog of
+cases: 100% (no loss), 80%, and 70% of usable nights. (CC analog of
 14_snia_host_specz_zhist.py.)
 
 Weather loss is statistical, so the 80%/70% cases are the 100% distribution
@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
-CASES = [(1.0, "100% (no weather loss)", "lightblue"),
+CASES = [(1.0, "100% (no loss)", "lightblue"),
          (0.8, "80% weather",            "lightgreen"),
          (0.7, "70% weather",            "lightcoral")]
 
