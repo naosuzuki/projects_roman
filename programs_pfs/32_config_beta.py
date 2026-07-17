@@ -181,6 +181,35 @@ def main():
     fig3.tight_layout(); fig3.savefig(png3, dpi=140)
     print("plot ->", png3)
 
+    # painted version of the alpha+beta overlay map (alpha blue fill, beta red
+    # fill, bigger host points); alpha-and-beta overlaps blend toward purple
+    fig4, axp = plt.subplots(figsize=(9, 9))
+    axp.scatter(ra[rem], dec[rem], s=11, c="0.35", alpha=0.65, linewidths=0,
+                label="Remaining hosts")
+    for cens, col, lab in ((A, "#1f6fe0", "Configuration $\\alpha$ (16)"),
+                           (B, "red", "Configuration $\\beta$ ($+15^\\circ$)")):
+        first = True
+        for xc, yc in cens:
+            sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+            axp.add_patch(Polygon(sky, closed=True, facecolor=col,
+                                  edgecolor="none", alpha=0.10))
+            axp.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
+                                  lw=1.5, alpha=0.85, label=(lab if first else None)))
+            first = False
+    th4 = np.linspace(0, 2 * np.pi, 240)
+    fra4, fdec4 = t2sky(R_FOOT * np.cos(th4), R_FOOT * np.sin(th4))
+    axp.plot(fra4, fdec4, color="0.4", ls="--", lw=1.1, label="Footprint edge")
+    axp.set_aspect(1.0 / cosd); axp.invert_xaxis()
+    axp.set_xlabel("RA (deg)", fontsize=20); axp.set_ylabel("Dec (deg)", fontsize=20)
+    axp.set_title(f"Configurations $\\alpha$ + $\\beta$, Painted  "
+                  f"(coverage {100*covA.sum()/n:.0f}% $\\to$ {100*covU.sum()/n:.0f}%)",
+                  fontsize=17)
+    axp.tick_params(labelsize=15); axp.legend(fontsize=14, loc="upper right")
+    axp.grid(True, alpha=0.25)
+    png4 = os.path.join(PNG_DIR, "32_config_beta_map_painted_ELAIS-N1.png")
+    fig4.tight_layout(); fig4.savefig(png4, dpi=140)
+    print("plot ->", png4)
+
 
 if __name__ == "__main__":
     main()
