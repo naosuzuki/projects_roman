@@ -19,9 +19,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
-CASES = [(1.0, "SN 100% (no weather loss)", "blue"),
-         (0.8, "SN 80% weather",            "g"),
-         (0.7, "SN 70% weather",            "red")]
+CASES = [(1.0, "SNIa 100% (no weather loss)", "blue"),
+         (0.8, "SNIa 80% weather",            "g"),
+         (0.7, "SNIa 70% weather",            "red")]
 W_HOST = 0.8                                  # host case: 80% weather
 
 
@@ -69,7 +69,7 @@ def main():
                linewidth=0.4, zorder=i + 2, label=f"{lab}  ($N={n:.0f}$)")
 
     ax.set_xlabel("Redshift", fontsize=21)
-    ax.set_ylabel("Number of Successful Spec-$z$", fontsize=21)
+    ax.set_ylabel("Expected Number of Successful Spec-$z$", fontsize=21)
     ax.set_title("ELAIS-N1 SN Ia and Host-Galaxy PFS Spec-$z$ vs Redshift",
                  fontsize=18)
     ax.tick_params(labelsize=16)

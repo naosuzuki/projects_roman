@@ -57,7 +57,7 @@ def main():
                linewidth=0.4, zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
 
     ax.set_xlabel("Redshift", fontsize=18)
-    ax.set_ylabel("Number of SN Ia Hosts (Successful Spec-$z$)", fontsize=18)
+    ax.set_ylabel("Expected Number of Successful Spec-$z$", fontsize=18)
     ax.set_title("ELAIS-N1 SN Ia Host Galaxies with Successful PFS Spec-$z$ vs Redshift",
                  fontsize=15)
     ax.tick_params(labelsize=13)
