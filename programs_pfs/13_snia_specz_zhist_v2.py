@@ -13,7 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PNG_DIR = os.path.join(HERE, "outputs", "png")
 CSV = os.path.join(HERE, "outputs", "csv", "07_program_sne_ELAIS-N1.csv")
 
-CASES = [(1.0, "100% (no weather loss)", "red"),
+CASES = [(1.0, "100% (no loss)", "red"),
          (0.8, "80% weather",            "g"),
          (0.7, "70% weather",            "blue")]
 
