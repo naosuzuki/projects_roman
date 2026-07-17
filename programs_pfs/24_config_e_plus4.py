@@ -93,22 +93,32 @@ def main():
     fig, (axm, axr) = plt.subplots(1, 2, figsize=(15, 6.5))
     axm.scatter(ra[covered], dec[covered], s=5, c="#2ca02c", alpha=0.5, linewidths=0, label="Covered")
     axm.scatter(ra[~covered], dec[~covered], s=6, c="#d62728", alpha=0.6, linewidths=0, label="Missed")
-    for grp, col, lab in ((ring, "#1f6fe0", "Config E ring (12)"),
-                          (central, "#9467bd", "Config G central (4)")):
-        first = True
-        for xc, yc in grp:
-            sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
-            axm.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col, lw=1.7,
-                                  alpha=0.9, label=(lab if first else None)))
-            first = False
-    th = np.linspace(0, 2 * np.pi, 240)
-    fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
-    axm.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label=f"Footprint edge")
-    axm.set_aspect(1.0 / cosd); axm.invert_xaxis()
-    axm.set_xlabel("RA (deg)", fontsize=16); axm.set_ylabel("Dec (deg)", fontsize=16)
-    axm.set_title(f"Config E (12) + Config G (4 Central) = 16 Fields  "
-                  f"(coverage {100*covered.sum()/n:.0f}\\%)", fontsize=14)
-    axm.tick_params(labelsize=12); axm.legend(fontsize=11, loc="upper right"); axm.grid(True, alpha=0.25)
+    def draw_map(ax, lfs=16, tfs=12, tts=14, lgs=11):
+        ax.scatter(ra[covered], dec[covered], s=5, c="#2ca02c", alpha=0.5,
+                   linewidths=0, label="Covered")
+        ax.scatter(ra[~covered], dec[~covered], s=6, c="#d62728", alpha=0.6,
+                   linewidths=0, label="Missed")
+        for grp, col, lab in ((ring, "#1f6fe0", "Config E ring (12)"),
+                              (central, "#9467bd", "Config G central (4)")):
+            first = True
+            for xc, yc in grp:
+                sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+                ax.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
+                                     lw=1.7, alpha=0.9, label=(lab if first else None)))
+                first = False
+        th = np.linspace(0, 2 * np.pi, 240)
+        fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
+        ax.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label="Footprint edge")
+        ax.set_aspect(1.0 / cosd); ax.invert_xaxis()
+        ax.set_xlabel("RA (deg)", fontsize=lfs); ax.set_ylabel("Dec (deg)", fontsize=lfs)
+        ax.set_title(f"Config E (12) + Config G (4 Central) = 16 Fields  "
+                     f"(coverage {100*covered.sum()/n:.0f}%)", fontsize=tts)
+        ax.tick_params(labelsize=tfs); ax.legend(fontsize=lgs, loc="upper right")
+        ax.grid(True, alpha=0.25)
+
+    # (points are drawn inside draw_map; clear the pre-drawn ones)
+    axm.clear()
+    draw_map(axm)
 
     axr.plot(exp, 100 * rec / n, "-o", color="#1f6fe0", ms=4)
     axr.axhline(100 * covered.sum() / n, color="0.6", ls=":", lw=1,
@@ -122,6 +132,13 @@ def main():
     png = os.path.join(PNG_DIR, "24_config_e_plus4_ELAIS-N1.png")
     fig.tight_layout(); fig.savefig(png, dpi=140)
     print("plot ->", png)
+
+    # standalone version of the coverage map (left panel)
+    fig2, axs = plt.subplots(figsize=(9, 9))
+    draw_map(axs, lfs=20, tfs=15, tts=16, lgs=14)
+    png2 = os.path.join(PNG_DIR, "24_config_e_plus4_map_ELAIS-N1.png")
+    fig2.tight_layout(); fig2.savefig(png2, dpi=140)
+    print("plot ->", png2)
 
 
 if __name__ == "__main__":
