@@ -133,9 +133,11 @@ def main():
     fig.tight_layout(); fig.savefig(png, dpi=140)
     print("plot ->", png)
 
-    # standalone version of the coverage map (left panel)
+    # standalone version of the coverage map (left panel): "Configuration alpha"
     fig2, axs = plt.subplots(figsize=(9, 9))
-    draw_map(axs, lfs=20, tfs=15, tts=16, lgs=14)
+    draw_map(axs, lfs=20, tfs=15, tts=17, lgs=14)
+    axs.set_title(f"Configuration $\\alpha$ = E Ring (12) + G Central (4)  "
+                  f"(Coverage {100*covered.sum()/n:.0f}%)", fontsize=17)
     png2 = os.path.join(PNG_DIR, "24_config_e_plus4_map_ELAIS-N1.png")
     fig2.tight_layout(); fig2.savefig(png2, dpi=140)
     print("plot ->", png2)
