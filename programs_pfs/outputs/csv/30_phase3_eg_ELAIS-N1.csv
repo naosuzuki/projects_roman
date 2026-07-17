@@ -1,5 +1,5 @@
-class,N_host_zcut,N_completed,N_unobserved,N_started_below,N_remaining,EG_visit1,EG_visit2
-Ia,2811,1661,940,210,1150,576,659
-CC,2169,1052,755,362,1117,356,411
-TDE,6,3,3,0,3,2,2
-total,4986,2716,1698,572,2270,934,1072
+class,N_host_zcut,N_completed,N_unobserved,N_started_below,N_remaining,EG_visit1,EG_visit2,EG_visit3
+Ia,2811,1661,940,210,1150,576,659,714
+CC,2169,1052,755,362,1117,356,411,444
+TDE,6,3,3,0,3,2,2,2
+total,4986,2716,1698,572,2270,934,1072,1160

@@ -3,7 +3,7 @@
 30_phase3_eg_table.py -- Phase III ledger for the E+G configuration (Case 6:
 12-pointing ring at r=1.5 deg + 4 central fields = 16 fields): per transient
 class, the Table-5 remaining-host decomposition PLUS the number of host spec-z
-completed (reaching S/N=5) after Phase III visit 1 and visit 2, where one visit
+completed (reaching S/N=5) after Phase III visits 1, 2, and 3, where one visit
 observes every E+G field once for 1 h and a host in n overlapping fields gains
 n hours per visit.
 
@@ -59,11 +59,11 @@ def main():
         ncov += Path(hexagon(xc, yc)).contains_points(pts).astype(int)
 
     out = os.path.join(CSV_DIR, "30_phase3_eg_ELAIS-N1.csv")
-    print("Class  hostZ<25.5  completed  unobs  SN<5  remaining  P3visit1  P3visit2")
+    print("Class  hostZ<25.5  completed  unobs  SN<5  remaining  P3visit1  P3visit2  P3visit3")
     with open(out, "w") as fo:
         fo.write("class,N_host_zcut,N_completed,N_unobserved,N_started_below,"
-                 "N_remaining,EG_visit1,EG_visit2\n")
-        tots = np.zeros(7, int)
+                 "N_remaining,EG_visit1,EG_visit2,EG_visit3\n")
+        tots = np.zeros(8, int)
         for c in CLASSES:
             m = htar & (typ == c)
             n, nc = int(m.sum()), int((m & comp).sum())
@@ -71,10 +71,11 @@ def main():
             nun, nsb = int((r & ~start).sum()), int((r & start).sum())
             v1 = int((r & (1 * ncov >= rneed)).sum())
             v2 = int((r & (2 * ncov >= rneed)).sum())
-            tots += (n, nc, nun, nsb, nun + nsb, v1, v2)
-            fo.write(f"{c},{n},{nc},{nun},{nsb},{nun+nsb},{v1},{v2}\n")
+            v3 = int((r & (3 * ncov >= rneed)).sum())
+            tots += (n, nc, nun, nsb, nun + nsb, v1, v2, v3)
+            fo.write(f"{c},{n},{nc},{nun},{nsb},{nun+nsb},{v1},{v2},{v3}\n")
             print(f"{c:5s}  {n:9d}  {nc:9d}  {nun:5d}  {nsb:4d}  {nun+nsb:9d}"
-                  f"  {v1:8d}  {v2:8d}")
+                  f"  {v1:8d}  {v2:8d}  {v3:8d}")
         fo.write("total," + ",".join(str(t) for t in tots) + "\n")
         print("total  " + "  ".join(f"{t}" for t in tots))
     print("table ->", out)
