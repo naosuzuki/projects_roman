@@ -68,13 +68,13 @@ def main():
         ax.bar(centers, counts * w, width=bw, color=col, edgecolor="white",
                linewidth=0.4, zorder=i + 2, label=f"{lab}  ($N={n:.0f}$)")
 
-    ax.set_xlabel("Redshift", fontsize=18)
-    ax.set_ylabel("Number of Successful Spec-$z$", fontsize=18)
+    ax.set_xlabel("Redshift", fontsize=21)
+    ax.set_ylabel("Number of Successful Spec-$z$", fontsize=21)
     ax.set_title("ELAIS-N1 SN Ia and Host-Galaxy PFS Spec-$z$ vs Redshift",
-                 fontsize=16)
-    ax.tick_params(labelsize=13)
+                 fontsize=18)
+    ax.tick_params(labelsize=16)
     ax.set_xlim(0, bins[-1])
-    ax.legend(fontsize=12, loc="upper left")
+    ax.legend(fontsize=14, loc="upper left")
     ax.grid(True, axis="y", alpha=0.3)
 
     png = os.path.join(PNG_DIR, "26_snia_specz_sn_host_zhist_ELAIS-N1.png")
