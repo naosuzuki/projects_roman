@@ -56,16 +56,17 @@ def main():
     centers = 0.5 * (edges[:-1] + edges[1:])
     bw = (edges[1] - edges[0]) * 0.93         # slightly narrower than the bin -> small gap
     fig, ax = plt.subplots(figsize=(9, 6))
+    # host 80% case in the BACKGROUND (lowest zorder), light green alpha=0.6;
+    # the opaque SN bars are drawn on top, so the SN colors stay pure.
+    nh = W_HOST * len(zh)
+    ax.bar(centers, hcounts * W_HOST, width=bw, color="lightgreen", alpha=0.6,
+           edgecolor="white", linewidth=0.4, zorder=1,
+           label=f"Host 80% weather  ($N={nh:.0f}$)")
     # nested SN bars: 100% first, then 80%, then 70% on top (as Fig 14)
     for i, (w, lab, col) in enumerate(CASES):
         n = w * len(zo)
         ax.bar(centers, counts * w, width=bw, color=col, edgecolor="white",
-               linewidth=0.4, zorder=i + 1, label=f"{lab}  ($N={n:.0f}$)")
-    # host 80% case overlaid, light green, alpha=0.5
-    nh = W_HOST * len(zh)
-    ax.bar(centers, hcounts * W_HOST, width=bw, color="lightgreen", alpha=0.5,
-           edgecolor="white", linewidth=0.4, zorder=5,
-           label=f"Host 80% weather  ($N={nh:.0f}$)")
+               linewidth=0.4, zorder=i + 2, label=f"{lab}  ($N={n:.0f}$)")
 
     ax.set_xlabel("Redshift", fontsize=18)
     ax.set_ylabel("Number of Successful Spec-$z$", fontsize=18)
