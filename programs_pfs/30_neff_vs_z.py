@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-15_neff_vs_z.py -- Galaxy surface density vs redshift from the UV luminosity function.
+30_neff_vs_z.py -- Galaxy surface density vs redshift from the UV luminosity function.
 
 Computes dN/dz per arcmin^2 for NIR (Y/J) limiting magnitudes, by integrating a
 Schechter UV luminosity function with observed redshift evolution.  This is the
@@ -42,7 +42,7 @@ CAVEATS (read before using in a proposal)
     is an extrapolation well below the magnitudes where the LF is constrained.
 
 Usage:
-    python3 15_neff_vs_z.py        # writes outputs/neff_vs_z.{pdf,png}
+    python3 30_neff_vs_z.py        # writes outputs/neff_vs_z.{pdf,png}
 """
 
 import os

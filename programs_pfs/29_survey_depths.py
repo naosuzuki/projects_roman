@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-13_survey_depths.py -- Survey landscape: depth vs. area for deep extragalactic fields.
+29_survey_depths.py -- Survey landscape: depth vs. area for deep extragalactic fields.
 
 Reproduces the "Survey Area vs. Total Stacked Depth" diagram used in the
 Roman-Subaru proposal / roman2026 (Figures/survey_depths.pdf).  Each field is a
@@ -11,7 +11,7 @@ Dashed grey lines are iso-"survey-power" contours (constant depth + area grasp);
 power increases toward the upper right.
 
 Usage:
-    python3 13_survey_depths.py            # writes outputs/survey_depths.{pdf,png}
+    python3 29_survey_depths.py            # writes outputs/survey_depths.{pdf,png}
 
 No external data or the PFS ETC are needed -- the field list is tabulated below.
 """
