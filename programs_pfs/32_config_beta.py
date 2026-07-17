@@ -150,6 +150,35 @@ def main():
     fig2.tight_layout(); fig2.savefig(png2, dpi=140)
     print("plot ->", png2)
 
+    # standalone Configuration-beta-only map (companion to the alpha map of 24)
+    covB = rem & (nB > 0)
+    fig3, axb = plt.subplots(figsize=(9, 9))
+    rb = covB[rem]                                  # covered mask within remaining
+    axb.scatter(ra[rem][rb], dec[rem][rb], s=5, c="#2ca02c", alpha=0.5,
+                linewidths=0, label="Covered")
+    axb.scatter(ra[rem][~rb], dec[rem][~rb], s=6, c="#d62728", alpha=0.6,
+                linewidths=0, label="Missed")
+    for grp, col, lab in ((B[:M], "#1f6fe0", "E ring $+15^\\circ$ (12)"),
+                          (B[M:], "#9467bd", "G central $+15^\\circ$ (4)")):
+        first = True
+        for xc, yc in grp:
+            sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+            axb.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
+                                  lw=1.7, alpha=0.9, label=(lab if first else None)))
+            first = False
+    th = np.linspace(0, 2 * np.pi, 240)
+    fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
+    axb.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label="Footprint edge")
+    axb.set_aspect(1.0 / cosd); axb.invert_xaxis()
+    axb.set_xlabel("RA (deg)", fontsize=20); axb.set_ylabel("Dec (deg)", fontsize=20)
+    axb.set_title(f"Configuration $\\beta$ = $\\alpha$ Rotated $15^\\circ$  "
+                  f"(Coverage {100*covB.sum()/n:.0f}%)", fontsize=17)
+    axb.tick_params(labelsize=15); axb.legend(fontsize=14, loc="upper right")
+    axb.grid(True, alpha=0.25)
+    png3 = os.path.join(PNG_DIR, "32_config_beta_only_map_ELAIS-N1.png")
+    fig3.tight_layout(); fig3.savefig(png3, dpi=140)
+    print("plot ->", png3)
+
 
 if __name__ == "__main__":
     main()
