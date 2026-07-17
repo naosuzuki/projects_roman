@@ -133,11 +133,31 @@ def main():
     fig.tight_layout(); fig.savefig(png, dpi=140)
     print("plot ->", png)
 
-    # standalone version of the coverage map (left panel): "Configuration alpha"
+    # standalone version of the coverage map: "Configuration alpha", painted
+    # blue (Fig 13 style: light fill + solid outline), bigger host points
     fig2, axs = plt.subplots(figsize=(9, 9))
-    draw_map(axs, lfs=20, tfs=15, tts=17, lgs=14)
+    axs.scatter(ra[covered], dec[covered], s=11, c="#2ca02c", alpha=0.6,
+                linewidths=0, label="Covered")
+    axs.scatter(ra[~covered], dec[~covered], s=13, c="#d62728", alpha=0.75,
+                linewidths=0, label="Missed")
+    first = True
+    for xc, yc in ring + central:
+        sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+        axs.add_patch(Polygon(sky, closed=True, facecolor="#1f6fe0",
+                              edgecolor="none", alpha=0.10))
+        axs.add_patch(Polygon(sky, closed=True, fill=False, edgecolor="#1f6fe0",
+                              lw=1.8, alpha=0.9,
+                              label=("Configuration $\\alpha$ (16)" if first else None)))
+        first = False
+    th2 = np.linspace(0, 2 * np.pi, 240)
+    fra2, fdec2 = t2sky(R_FOOT * np.cos(th2), R_FOOT * np.sin(th2))
+    axs.plot(fra2, fdec2, color="0.4", ls="--", lw=1.1, label="Footprint edge")
+    axs.set_aspect(1.0 / cosd); axs.invert_xaxis()
+    axs.set_xlabel("RA (deg)", fontsize=20); axs.set_ylabel("Dec (deg)", fontsize=20)
     axs.set_title(f"Configuration $\\alpha$ = E Ring (12) + G Central (4)  "
                   f"(Coverage {100*covered.sum()/n:.0f}%)", fontsize=17)
+    axs.tick_params(labelsize=15); axs.legend(fontsize=14, loc="upper right")
+    axs.grid(True, alpha=0.25)
     png2 = os.path.join(PNG_DIR, "24_config_e_plus4_map_ELAIS-N1.png")
     fig2.tight_layout(); fig2.savefig(png2, dpi=140)
     print("plot ->", png2)

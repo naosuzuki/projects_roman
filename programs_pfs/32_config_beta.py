@@ -150,22 +150,24 @@ def main():
     fig2.tight_layout(); fig2.savefig(png2, dpi=140)
     print("plot ->", png2)
 
-    # standalone Configuration-beta-only map (companion to the alpha map of 24)
+    # standalone Configuration-beta-only map (companion to the alpha map of 24):
+    # painted red (Fig 13 style: light fill + solid outline), bigger host points
     covB = rem & (nB > 0)
     fig3, axb = plt.subplots(figsize=(9, 9))
     rb = covB[rem]                                  # covered mask within remaining
-    axb.scatter(ra[rem][rb], dec[rem][rb], s=5, c="#2ca02c", alpha=0.5,
+    axb.scatter(ra[rem][rb], dec[rem][rb], s=11, c="#2ca02c", alpha=0.6,
                 linewidths=0, label="Covered")
-    axb.scatter(ra[rem][~rb], dec[rem][~rb], s=6, c="#d62728", alpha=0.6,
+    axb.scatter(ra[rem][~rb], dec[rem][~rb], s=13, c="0.35", alpha=0.75,
                 linewidths=0, label="Missed")
-    for grp, col, lab in ((B[:M], "#1f6fe0", "E ring $+15^\\circ$ (12)"),
-                          (B[M:], "#9467bd", "G central $+15^\\circ$ (4)")):
-        first = True
-        for xc, yc in grp:
-            sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
-            axb.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
-                                  lw=1.7, alpha=0.9, label=(lab if first else None)))
-            first = False
+    first = True
+    for xc, yc in B:
+        sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+        axb.add_patch(Polygon(sky, closed=True, facecolor="red",
+                              edgecolor="none", alpha=0.10))
+        axb.add_patch(Polygon(sky, closed=True, fill=False, edgecolor="red",
+                              lw=1.8, alpha=0.9,
+                              label=("Configuration $\\beta$ (16)" if first else None)))
+        first = False
     th = np.linspace(0, 2 * np.pi, 240)
     fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
     axb.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label="Footprint edge")
