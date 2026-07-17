@@ -102,27 +102,30 @@ def main():
         return RA0 + x / cosd, DEC0 + y
     ra, dec = t2sky(pts[:, 0], pts[:, 1])
 
+    def draw_map(ax, lfs=16, tfs=12, tts=15, lgs=11):
+        ax.scatter(ra[rem], dec[rem], s=5, c="0.55", alpha=0.5, linewidths=0,
+                   label="Remaining hosts")
+        for cens, col, lab in ((A, "#1f6fe0", "Configuration $\\alpha$ (16)"),
+                               (B, "#d62728", "Configuration $\\beta$ ($+15^\\circ$)")):
+            first = True
+            for xc, yc in cens:
+                sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
+                ax.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
+                                     lw=1.5, alpha=0.85, label=(lab if first else None)))
+                first = False
+        th = np.linspace(0, 2 * np.pi, 240)
+        fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
+        ax.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label="Footprint edge")
+        ax.set_aspect(1.0 / cosd); ax.invert_xaxis()
+        ax.set_xlabel("RA (deg)", fontsize=lfs); ax.set_ylabel("Dec (deg)", fontsize=lfs)
+        ax.set_title(f"Configurations $\\alpha$ + $\\beta$  "
+                     f"(coverage {100*covA.sum()/n:.0f}% $\\to$ {100*covU.sum()/n:.0f}%)",
+                     fontsize=tts)
+        ax.tick_params(labelsize=tfs); ax.legend(fontsize=lgs, loc="upper right")
+        ax.grid(True, alpha=0.25)
+
     fig, (axm, axr) = plt.subplots(1, 2, figsize=(15, 6.5))
-    axm.scatter(ra[rem], dec[rem], s=5, c="0.55", alpha=0.5, linewidths=0,
-                label="Remaining hosts")
-    for cens, col, lab in ((A, "#1f6fe0", "Configuration $\\alpha$ (16)"),
-                           (B, "#d62728", "Configuration $\\beta$ ($+15^\\circ$)")):
-        first = True
-        for xc, yc in cens:
-            sky = np.array([t2sky(x, y) for x, y in hexagon(xc, yc)])
-            axm.add_patch(Polygon(sky, closed=True, fill=False, edgecolor=col,
-                                  lw=1.5, alpha=0.85, label=(lab if first else None)))
-            first = False
-    th = np.linspace(0, 2 * np.pi, 240)
-    fra, fdec = t2sky(R_FOOT * np.cos(th), R_FOOT * np.sin(th))
-    axm.plot(fra, fdec, color="0.4", ls="--", lw=1.1, label="Footprint edge")
-    axm.set_aspect(1.0 / cosd); axm.invert_xaxis()
-    axm.set_xlabel("RA (deg)", fontsize=16); axm.set_ylabel("Dec (deg)", fontsize=16)
-    axm.set_title(f"Configurations $\\alpha$ + $\\beta$  "
-                  f"(coverage {100*covA.sum()/n:.0f}% $\\to$ {100*covU.sum()/n:.0f}%)",
-                  fontsize=15)
-    axm.tick_params(labelsize=12); axm.legend(fontsize=11, loc="upper right")
-    axm.grid(True, alpha=0.25)
+    draw_map(axm)
 
     axr.plot(exp, 100 * rec_ab / n, "-o", color="#1f6fe0", ms=4,
              label="$\\alpha/\\beta$ alternating")
@@ -139,6 +142,13 @@ def main():
     png = os.path.join(PNG_DIR, "32_config_beta_ELAIS-N1.png")
     fig.tight_layout(); fig.savefig(png, dpi=140)
     print("plot ->", png)
+
+    # standalone version of the alpha+beta FoV map (left panel)
+    fig2, axs = plt.subplots(figsize=(9, 9))
+    draw_map(axs, lfs=20, tfs=15, tts=17, lgs=14)
+    png2 = os.path.join(PNG_DIR, "32_config_beta_map_ELAIS-N1.png")
+    fig2.tight_layout(); fig2.savefig(png2, dpi=140)
+    print("plot ->", png2)
 
 
 if __name__ == "__main__":
