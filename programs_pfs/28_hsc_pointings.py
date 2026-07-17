@@ -59,15 +59,14 @@ def main():
     n = len(pts)
     print(f"HSC FoV {FOV_AREA} deg^2 -> circular radius R = {R:.3f} deg")
 
-    # ---- optimize the ring radius against the SN distribution (config A) ----
-    best = (0, None)
-    for d in np.round(np.arange(1.00, 1.61, 0.025), 3):
-        cov, _ = coverage(ring_centers(d, 0.0), pts)
-        if cov.sum() > best[0]:
-            best = (int(cov.sum()), d)
-    D = best[1]
-    print(f"optimal ring radius (max SN coverage, config A): d = {D:.3f} deg "
-          f"(geometric covering optimum sqrt(3)R = {np.sqrt(3)*R:.3f})")
+    # ---- ring radius: gap-free constraint ----
+    # The center and ring circles cover the inner disk seamlessly (no gaps at
+    # the triple points) only for d <= sqrt(3) R; within that limit, coverage
+    # grows with d, so the optimum is exactly the 7-circle covering d = sqrt(3) R
+    # (which fully covers the disk of radius 2R = 1.50 deg).
+    D = np.sqrt(3) * R
+    print(f"ring radius d = sqrt(3) R = {D:.3f} deg (gap-free 7-circle covering; "
+          f"full coverage inside r = {2*R:.2f} deg)")
 
     cenA = order_ccw(ring_centers(D, 0.0))
     cenB = order_ccw(ring_centers(D, 30.0))
