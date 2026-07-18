@@ -150,7 +150,8 @@ Summary → Appendix A (i-band ETC) [→ Appendix B (HSC binning) — TO BE REMO
   "Expected Number of Successful Spec-z".
 - **programs_desi/**: DESI case handover in programs_desi/CLAUDE.md; a separate
   session drafted scripts 04–09 + outputs (committed as WIP).
-- Paper section order/labels shifted a lot this cycle — trust ef, and always
+- Paper section order/labels shifted a lot this cycle — trust 
+ef, and always
   `git pull --no-rebase` the paper first (user edits on Overleaf; binary PNG
   conflicts have deleted figures before — regenerate from programs_pfs).
 
