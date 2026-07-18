@@ -1,0 +1,11 @@
+config,ring_radius_deg,sample,total,covered,covered_pct
+A_triangle,0.400,Live SNe,5867,5329,90.8
+B_hexagon,0.400,Live SNe,5867,5562,94.8
+A_triangle,0.400,Host galaxies,4986,4532,90.9
+B_hexagon,0.400,Host galaxies,4986,4731,94.9
+A_triangle,0.400,Remaining hosts,2270,1816,80.0
+B_hexagon,0.400,Remaining hosts,2270,2015,88.8
+A_triangle,0.400,Field (SNe+hosts),10853,9861,90.9
+B_hexagon,0.400,Field (SNe+hosts),10853,10293,94.8
+A_triangle,0.400,core r<1.5,6504,6504,100.0
+B_hexagon,0.400,core r<1.5,6504,6504,100.0

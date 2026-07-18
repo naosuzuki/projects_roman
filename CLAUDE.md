@@ -17,10 +17,13 @@ analysis as the central deliverable:
 - **Phase I — Subaru/HSC imaging** (g, r2, i2): detect + photometrically
   monitor transients, measure host photometry, define target lists and the
   Roman Z-band magnitude cuts.
-- **Phase II — PFS live-SN spectroscopy**: observe SNe Ia + core-collapse while
-  their Roman Z087 light curve is brighter than Z = 24.
-- **Phase III — PFS host-galaxy spectroscopy**: once a SN fades past Z = 24,
-  observe its host if Z < 25, integrating to S/N = 5 at 10-pixel binning.
+- **Phase II — PFS main survey (2028-06-01 → 2030-05-31)**: live SNe Ia + CC +
+  TDE while Z087 < 24; when a SN fades, its host (Z < 25.5) gets fibers in the
+  same visits, integrating to S/N = 5 at 10-pixel binning. (Paper convention:
+  Phase II = the main-survey campaign incl. in-survey host obs.)
+- **Phase III — dedicated host follow-up after the main survey**: the 2,270
+  remaining hosts; baseline tiling **Configuration α** = E ring (12 pts,
+  r=1.5°) + G central square (4), alternated with **β** (α rotated 15°).
 
 Adopted survey: 7-pointing hexagonal PFS "flower"; **2 visits/month** (config A
 = 0°, config B = 30° rotation) in Subaru-observable months (Feb–Aug); **1 h per
@@ -83,32 +86,45 @@ astropy 7.2. Fonts: Times New Roman (System/Library/Fonts/Supplemental).
 | `05_visibility.py` | ELAIS-N1 visibility from Subaru (elev>30, astro night). Monthly bars split by airmass (2.0–1.8 red / 1.8–1.5 green / ≤1.5 blue). |
 | `06_pfs_pointings.py` | 7-pointing hex flower A (`--rotate 0`) / B (`--rotate 30`); per-pointing counts + A/B/A∪B coverage for SNe/CC/TDE/Ia-host/CC-host. |
 | `07_fiber_budget.py` | **End-to-end fiber-budget sim** (the main result). Reads Z087 light curves, simulates visits, SN→host lifecycle, per-pointing fibers needed vs 1794, spare, remaining hosts. |
-| `08_hsc_etc.py` | **Subaru/HSC imaging ETC** (g/r2/i2): point-source S/N vs exposure time for mag 24–28. CCD-equation model tuned to HSC-SSP depths. |
+| `08_hsc_etc.py` | **Subaru/HSC imaging ETC** (g/r2/i2): empirical sky-limited, anchored m5(1h)≈26. |
+| `09–12` | Redshift histograms: Ia/CC SNe and hosts by Z-mag bins (blue/limegreen/red). |
+| `13–17` | Successful spec-z N(z): Ia live/host (13/14), z-reach table (15), CC pair (16/17), 100/80/70% weather. |
+| `18` | Remaining-hosts RA/Dec map colored by Z. |
+| `19–25` | Phase III configs: C mosaic (19), E ring (20), E/F (21), radius opt →1.5° (22), G central fill (23), E+G=α (24), case summary (25). |
+| `26–27` | Combined SN+host spec-z histogram (26), + [OII] line-z estimate (27). |
+| `28` | HSC 7-pointing A/B (circular 1.77 deg², gap-free ring d=√3R=1.30°; 88%/88%/96%). |
+| `29–31` | Phase III ledgers: remaining table (29), α visits (30), 80%-weather + α/β (31). |
+| `32` | Configuration β (α+15°): coverage 92→97%, alternating recovery. |
 
 Outputs in `programs_pfs/outputs/{png,csv}/`. README in `programs_pfs/README.md`.
 
-**Plot style convention** (match across figures): Times New Roman; axis labels
-~17–18 pt with **first letter of each word capitalized**; `rainbow_r` colormap
-(bright = red → faint = violet); log-log with plain-number ticks; 60/90/120-min
-dotted guides; √t reference dashed.
+**Plot style convention** (match across figures): Times New Roman; capitalized
+axis labels, recently restyled figures use **24–28 pt labels/titles, 19–24 pt
+ticks (inward), legends 13–20 pt placed to avoid data**; plain-number ticks on
+log axes ("10", "100"); 60/90/120-min dotted guides; √t dashed (label "∝√t").
+Workflow: numbered script in programs_pfs → PNG in outputs/png → copy to paper
+figures/ → commit BOTH repos (paper: add → pull --no-rebase --no-edit → push).
 
 ---
 
 ## Key results
 
-- **ETC**: PFS sky-bkg-limited (S/N ∝ √t). z-band (Z087) 1 h S/N/pix ≈ 2.0/1.3/0.8
-  at z = 22/22.5/23. Host integration to S/N=5 at 10-pix: ~3/15/38/94 one-hour
-  visits at Z = 23/24/24.5/25 → faint hosts are expensive.
-- **HSC imaging** 5σ point-source depth (20 min): g≈27.2, r2≈26.7, i2≈26.1.
-- **Targets** (ELAIS-N1): 13,094 Ia + 18,774 CC; Z<24 → 3,864 Ia, 2,862 CC; TDE tiny (21).
-- **Pointing coverage** A∪B ≈ 76% (all SNe), ~70% for the Z<24 observable subset.
-- **Fiber budget** (07): 5,860 program SNe; demand peaks ~130–162 fibers/pointing
-  (host-dominated, season-opening backlog), mean ~75–86; **min spare 1632, mean
-  ~1715 ⇒ ≳90% spare** for collaborator filler targets. 4,754 Z<25 hosts: 2,713
-  completed, **2,041 remain incomplete** (mostly faint Z>24). Bottleneck =
-  faint-host integration time, not fibers.
-- ELAIS-N1 transits at elev 55.3° = **airmass 1.22** from Subaru (never <1.2);
-  observable Feb–Aug, prime Apr–Jul (~4–8 h/night).
+- **ETC**: PFS sky-limited (S/N∝√t); z-band 1 h S/N/pix ≈ 2.0/1.3/0.8 at
+  Z=22/22.5/23; host S/N=5@10-pix needs ~3/15/38/94 h at Z=23/24/24.5/25.
+- **Model (07)**: SNe Ia+CC+TDE live at Z<24; hosts Z<25.5. Program 5,867
+  (3,091 Ia / 2,769 CC / 7 TDE). Live spec-z: visible 1,416/1,476/5 →
+  observed 971/1,018/3 (success ~69%; ×0.8 weather → 777/814/2).
+  Hosts 4,986 → completed 2,716 (Ia 1,661) → **remaining 2,270**
+  (1,698 unobserved + 572 below S/N=5). Fibers never binding (min spare 1,611).
+- **Phase III cases** (Table 8): C 19pt/100%cov; E 12pt; E+F r=1.5° no-spill;
+  α=E+G 16 fields 92% cov (v1/v2/v3 = 934/1072/1160); β=α+15° → α∪β 97%,
+  α,β alternation v2 = 1,590. 80% weather: completed 2,173, remaining 2,813,
+  α/β visits 1,271/1,590, cumulative II+III 3,444/3,763 (Ia 82.2%).
+- **HSC**: imaging depth m5(1h)≈26; 7-pointing A/B circles (d=1.30°) cover
+  88%/88%, A∪B 96% of SNe, gap-free inside r=1.5°.
+- **[OII] line-z**: ~80% of hosts star-forming → ~1,200 Ia-host line-z in
+  ~1 h each; faint-tail continuum cost mostly avoidable (not yet in cost model).
+- ELAIS-N1 from Subaru: transit 55.3° (X=1.22), observable Feb–Aug.
 
 ---
 
@@ -126,23 +142,17 @@ Summary → Appendix A (i-band ETC) [→ Appendix B (HSC binning) — TO BE REMO
 
 ## ⚠️ PENDING — pick up here
 
-The **HSC ETC was redone** as a true *imaging* ETC (`08_hsc_etc.py` →
-`08_hsc_etc_{g,r2,i2}band.png`, mag 24–28, PFS-aligned style, capitalized
-labels/title). The paper still references the **old (mistaken)
-PFS-in-HSC-band** figures (`time_vs_sn_{g,r2,i2}band_loglog*.png`). To finish:
-
-1. Copy `08_hsc_etc_{g,r2,i2}band.png` into the paper `figures/`.
-2. In `ms.tex` Phase-I section (`fig:hsc`): swap the 3 panels to the new
-   `08_hsc_etc_*` figures; update the Phase-I text to imaging depths (5σ:
-   g≈27.2, r2≈26.7, i2≈26.1 at 20 min; point source, native 1×1 pixels).
-3. **Remove Appendix B** ("HSC-band binning", labels `app:hscbin`,
-   `fig:hscbin_{g,r2,i2}`) — no binning for imaging.
-4. Optionally `git rm` the unused `figures/time_vs_sn_{g,r2,i2}band*.png` from
-   the paper.
-5. Commit/push both repos.
-
-Then the likely next direction is feeding **real SN Ia / host SEDs** into the
-ETC (replacing the flat-fν continuum) and refining the cadence-aware yields.
+- **Two-tier host cost model**: fold [OII] line-z (1 h for ~80% SF hosts) into
+  07 and re-run Cases 1–6 — would slash Phase III costs (script 27 has f_SF).
+- **Figs 3 & Appendix i-band** (02 outputs) still on old 17 pt style; Fig 4
+  (z-band bins) already restyled (24 pt, split legends, "∝√t").
+- **CC spec-z histograms** (16/17) still "Number of CC..." y-label; Ia set uses
+  "Expected Number of Successful Spec-z".
+- **programs_desi/**: DESI case handover in programs_desi/CLAUDE.md; a separate
+  session drafted scripts 04–09 + outputs (committed as WIP).
+- Paper section order/labels shifted a lot this cycle — trust ef, and always
+  `git pull --no-rebase` the paper first (user edits on Overleaf; binary PNG
+  conflicts have deleted figures before — regenerate from programs_pfs).
 
 ---
 

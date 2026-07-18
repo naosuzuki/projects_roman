@@ -1,0 +1,4 @@
+class,N_roman,N_host,N_visible,N_completed,success_rate,net_obs_w75,net_rate_w75,net_obs_w65,net_rate_w65
+Ia,13094,2811,2438,1781,0.7305,1336,0.5479,1158,0.4748
+CC,18774,2169,1826,1057,0.5789,793,0.4341,687,0.3763
+TDE,21,6,5,3,0.6000,2,0.4500,2,0.3900
