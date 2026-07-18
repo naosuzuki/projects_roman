@@ -194,13 +194,12 @@ def main():
                      label="Elevation $<45^\\circ$")
     axn.fill_between(dnum, s1, s2, color="#2ca02c", alpha=0.85,
                      label="Elevation 45--50$^\\circ$")
-    axn.fill_between(dnum, s2, s3, color="#3b7dd8", alpha=0.85,
+    axn.fill_between(dnum, s2, s3, color="b", alpha=0.85,
                      label="Elevation $>50^\\circ$")
     axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
-    axn.set_ylabel("Visible hours / night", fontsize=28)
     axn.tick_params(labelsize=24)
     axn.tick_params(axis="x", labelbottom=True)   # month labels between the panels
-    axn.legend(fontsize=28, loc="center right")
+    axn.legend(fontsize=20, loc="center right")
     axn.grid(True, alpha=0.3)
     axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}",
                   fontsize=28)
@@ -214,20 +213,20 @@ def main():
             label="Elevation $<45^\\circ$")
     axm.bar(x, mon_grn, width=20, bottom=mon_red, color="#2ca02c",
             label="Elevation 45--50$^\\circ$")
-    axm.bar(x, mon_blu, width=20, bottom=mon_red + mon_grn, color="#3b7dd8",
+    axm.bar(x, mon_blu, width=20, bottom=mon_red + mon_grn, color="b",
             label="Elevation $>50^\\circ$")
     for i in range(12):
         if mon_mean[i] > 0:
             axm.text(x[i], mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
                      va="bottom", fontsize=24, color="0.3")
-    axm.set_ylabel("Mean visible hours / night", fontsize=28)
-    axm.set_xlabel("Month  (number above bar = total visible hours)", fontsize=28)
+    axm.set_xlabel("Month (Number above bar = Total Visible hours)", fontsize=28)
     axm.tick_params(labelsize=24)
     axm.tick_params(axis="x", labelbottom=False)  # months shown between panels only
-    axm.set_ylim(0, 8.5)
-    axm.legend(fontsize=28, loc="center right")
+    axm.set_ylim(0, 9)
+    axm.legend(fontsize=20, loc="center right")
     axm.grid(True, axis="y", alpha=0.3)
 
+    fig2.supylabel("Mean visible hours / night", fontsize=28)
     png2 = os.path.join(PNG_DIR, f"05_visibility_hours_{args.name}_{args.year}.png")
     fig2.savefig(png2, dpi=140)
     print("plot ->", png2)
