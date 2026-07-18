@@ -225,8 +225,8 @@ def main():
                 first, i = False, j + 1
             else:
                 i += 1
-        axev.set_ylim(-0.7, len(bands) + 1.6)   # headroom so the legend clears the top band
-        axev.legend(loc="upper right", fontsize=LABEL_FS, framealpha=0.9)
+        axev.set_ylim(-0.7, len(bands) + 1.4)   # headroom so the legend clears the top band
+        axev.legend(loc="upper right", fontsize=20, framealpha=0.9)
 
     # mark the (shifted) survey start (dotted line only, no text)
     if shift_days:
