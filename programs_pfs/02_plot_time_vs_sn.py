@@ -123,7 +123,7 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
     tr, sr = results[ref_mag]
     tref = np.linspace(tr.min(), tr.max(), 100)
     ax.plot(tref, sr[0] * np.sqrt(tref / tr[0]), "k--", lw=1.2, alpha=0.7,
-            label=r"$\propto\sqrt{t}$ (bkg-limited)")
+            label=r"$\propto\sqrt{t}$")
 
     lo, hi, _ = BANDS[band]
     binunit = "pixel" if npix == 1 else f"{npix}-pix bin"
