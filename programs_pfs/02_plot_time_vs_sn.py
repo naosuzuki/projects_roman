@@ -113,7 +113,7 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
     cmap = plt.get_cmap(cmap_name)
     colors = cmap(np.linspace(0.0, 1.0, len(mags)))
 
-    fig, ax = plt.subplots(figsize=(11, 6.5))
+    fig, ax = plt.subplots(figsize=(8, 6))
     for c, mag in zip(colors, mags):
         t, s = results[mag]
         ax.plot(t, s, "o-", color=c, lw=1.8, ms=5, label=f"{band} = {mag:.1f} AB")
@@ -137,9 +137,14 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
                  fontsize=TITLE_FS, pad=28)
     ax.text(0.5, 1.012, cond, transform=ax.transAxes, fontsize=13.5,
             ha="center", va="bottom", color="0.25")
-    ax.legend(frameon=True, fontsize=LEGEND_FS, loc="center left",
-              bbox_to_anchor=(1.01, 0.5), borderpad=0.3, labelspacing=0.35,
-              handlelength=1.4, handletextpad=0.5)
+    # split legend: brightest three upper-left, faintest two + sqrt lower-right
+    handles, labels = ax.get_legend_handles_labels()
+    lkw = dict(frameon=True, fontsize=LEGEND_FS, borderpad=0.25,
+               labelspacing=0.25, handlelength=1.2, handletextpad=0.4,
+               framealpha=0.85)
+    leg1 = ax.legend(handles[:3], labels[:3], loc="upper left", **lkw)
+    ax.legend(handles[3:], labels[3:], loc="lower right", **lkw)
+    ax.add_artist(leg1)
 
     if loglog:
         ax.set_xscale("log")
