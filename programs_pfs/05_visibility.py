@@ -196,9 +196,9 @@ def main():
     axn.fill_between(dnum, s2, s3, color="#3b7dd8", alpha=0.85,
                      label="Elevation $>50^\\circ$")
     axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
-    axn.set_ylabel("Visible hours / night", fontsize=18)
-    axn.set_xlabel("Date", fontsize=18)
-    axn.tick_params(labelsize=TICK_FS)
+    axn.set_ylabel("Visible hours / night", fontsize=28)
+    axn.set_xlabel("Date", fontsize=28)
+    axn.tick_params(labelsize=24)
     axn.legend(fontsize=12, loc="lower right")
     axn.grid(True, alpha=0.3)
     axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}  "
@@ -219,11 +219,12 @@ def main():
             axm.text(i, mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
                      va="bottom", fontsize=13, color="0.3")
     axm.set_xticks(x)
-    axm.set_xticklabels(MON, fontsize=TICK_FS)
-    axm.set_ylabel("Mean visible hours / night", fontsize=18)
-    axm.set_xlabel("Month  (number above bar = total visible hours)", fontsize=18)
-    axm.tick_params(labelsize=TICK_FS)
-    axm.legend(fontsize=11, loc="upper right")
+    axm.set_xticklabels(MON, fontsize=24)
+    axm.set_ylabel("Mean visible hours / night", fontsize=28)
+    axm.set_xlabel("Month  (number above bar = total visible hours)", fontsize=28)
+    axm.tick_params(labelsize=24)
+    axm.set_ylim(0, 8.5)
+    axm.legend(fontsize=11, loc="center right")
     axm.grid(True, axis="y", alpha=0.3)
 
     png2 = os.path.join(PNG_DIR, f"05_visibility_hours_{args.name}_{args.year}.png")
