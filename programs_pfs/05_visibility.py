@@ -201,7 +201,7 @@ def main():
     axn.tick_params(axis="x", labelbottom=True)   # month labels between the panels
     axn.legend(fontsize=20, loc="center right")
     axn.grid(True, alpha=0.3)
-    axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}",
+    axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea)",
                   fontsize=28)
     axn.xaxis.set_major_locator(mdates.MonthLocator())
     axn.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
