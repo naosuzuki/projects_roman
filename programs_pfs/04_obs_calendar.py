@@ -97,6 +97,9 @@ def main():
                          "(e.g. 2027-04-15), leaving the main survey unchanged")
     ap.add_argument("--pilot-gap", type=float, default=90.0,
                     help="min gap (days) separating the pilot group from the main survey")
+    ap.add_argument("--phase-labels", action="store_true", dest="phase_labels",
+                    help="open a gap between the panels and mark the Subaru phase "
+                         "starts (Phase-I HSC, Phase-II PFS, Phase-III PFS)")
     args = ap.parse_args()
 
     shift_days = 0.0
@@ -232,6 +235,20 @@ def main():
         x0 = mdates.date2num(Time(args.shift_to).to_datetime())
         for ax in (axtop, axev):
             ax.axvline(x0, color="k", ls=":", lw=1.3, zorder=3)
+
+    # mark the Subaru phase starts in a gap between the panels
+    if args.phase_labels:
+        fig.get_layout_engine().set(hspace=0.14)
+        PHASES = (("2027-04-15", "Phase-I HSC"),
+                  ("2028-06-01", "Phase-II PFS"),
+                  ("2030-07-01", "Phase-III PFS"))
+        tr = axev.get_xaxis_transform()          # x = data (date), y = axes fraction
+        for dstr, lab in PHASES:
+            xd = mdates.date2num(Time(dstr).to_datetime())
+            axev.plot([xd, xd], [1.0, 1.05], transform=tr, color="k", lw=1.5,
+                      clip_on=False)
+            axev.text(xd, 1.06, " " + lab, transform=tr, fontsize=19,
+                      fontweight="bold", ha="left", va="bottom", clip_on=False)
 
     png = os.path.join(PNG_DIR, f"04_obs_calendar_{args.field}{args.label}.png")
     fig.savefig(png, dpi=140)
