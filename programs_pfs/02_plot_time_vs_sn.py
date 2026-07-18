@@ -102,9 +102,9 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "stix"
-    LABEL_FS = 17   # axis label font size
+    LABEL_FS = 24   # axis label font size
     TICK_FS = 13    # tick label font size
-    TITLE_FS = 16   # title font size
+    TITLE_FS = 24   # title font size
     LEGEND_FS = 13  # legend font size
     VLINE_FS = 13   # vertical-line annotation font size
 
@@ -127,14 +127,16 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
 
     lo, hi, _ = BANDS[band]
     binunit = "pixel" if npix == 1 else f"{npix}-pix bin"
-    ax.set_xlabel(f"Total exposure time  [min]   ({single_exp:.0f} s frames)",
+    ax.set_xlabel(f"Total Exposure Time [min]  ({single_exp:.0f} s frames)",
                   fontsize=LABEL_FS)
-    ax.set_ylabel(f"{band}-band continuum S/N per {binunit}  (median, {lo:.0f}–{hi:.0f} nm)",
-                  fontsize=LABEL_FS)
+    ax.set_ylabel(f"Continuum S/N per {binunit}\n"
+                  f"(Median, {lo:.0f}–{hi:.0f} nm)", fontsize=LABEL_FS)
     ax.tick_params(labelsize=TICK_FS)
     scale = "log–log" if loglog else "linear"
-    ax.set_title(f"Subaru PFS ETC — {band}-band S/N vs exposure time ({scale})\n{cond}",
-                 fontsize=TITLE_FS)
+    ax.set_title(f"Subaru PFS ETC — {band}-band ({scale})",
+                 fontsize=TITLE_FS, pad=28)
+    ax.text(0.5, 1.012, cond, transform=ax.transAxes, fontsize=13.5,
+            ha="center", va="bottom", color="0.25")
     ax.legend(frameon=True, fontsize=LEGEND_FS)
 
     if loglog:
