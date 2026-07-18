@@ -238,7 +238,11 @@ def main():
 
     # mark the Subaru phase starts in a gap between the panels
     if args.phase_labels:
-        fig.get_layout_engine().set(hspace=0.14)
+        fig.get_layout_engine().set(hspace=0.18)
+        # inward tick marks on both panels, and keep the top panel's bottom axis
+        for ax in (axtop, axev):
+            ax.tick_params(which="both", direction="in")
+        axtop.tick_params(axis="x", bottom=True, labelbottom=False)
         PHASES = (("2027-04-15", "Phase-I HSC"),
                   ("2028-06-01", "Phase-II PFS"),
                   ("2030-07-01", "Phase-III PFS"))
@@ -247,7 +251,7 @@ def main():
             xd = mdates.date2num(Time(dstr).to_datetime())
             axev.plot([xd, xd], [1.0, 1.05], transform=tr, color="k", lw=1.5,
                       clip_on=False)
-            axev.text(xd, 1.06, " " + lab, transform=tr, fontsize=19,
+            axev.text(xd, 1.06, " " + lab, transform=tr, fontsize=30,
                       fontweight="bold", ha="left", va="bottom", clip_on=False)
 
     png = os.path.join(PNG_DIR, f"04_obs_calendar_{args.field}{args.label}.png")
