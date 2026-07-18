@@ -184,7 +184,8 @@ def main():
     print("plot ->", png)
 
     # ---- dedicated "observable hours" figure: per night + per month ----
-    fig2, (axn, axm) = plt.subplots(2, 1, figsize=(13, 8), constrained_layout=True)
+    fig2, (axn, axm) = plt.subplots(2, 1, figsize=(13, 8), sharex=True,
+                                    constrained_layout=True)
 
     s1 = red_h
     s2 = red_h + grn_h
@@ -197,34 +198,34 @@ def main():
                      label="Elevation $>50^\\circ$")
     axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
     axn.set_ylabel("Visible hours / night", fontsize=28)
-    axn.set_xlabel("Date", fontsize=28)
     axn.tick_params(labelsize=24)
-    axn.legend(fontsize=12, loc="lower right")
+    axn.tick_params(axis="x", labelbottom=True)   # month labels between the panels
+    axn.legend(fontsize=28, loc="center right")
     axn.grid(True, alpha=0.3)
-    axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}  "
-                  f"(elevation $>{alt_lim:.0f}^\\circ$)", fontsize=TITLE_FS)
+    axn.set_title(f"Visible hours for {args.name} from Subaru (Maunakea), {args.year}",
+                  fontsize=28)
     axn.xaxis.set_major_locator(mdates.MonthLocator())
     axn.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
     axn.set_xlim(dnum.min(), dnum.max())
 
-    x = np.arange(12)
-    axm.bar(x, mon_red, width=0.62, color="#d62728",
+    # bars share the top panel's date axis (month centers), months labeled once
+    x = mdates.date2num(Time([f"{args.year}-{m:02d}-15" for m in range(1, 13)]).to_datetime())
+    axm.bar(x, mon_red, width=20, color="#d62728",
             label="Elevation $<45^\\circ$")
-    axm.bar(x, mon_grn, width=0.62, bottom=mon_red, color="#2ca02c",
+    axm.bar(x, mon_grn, width=20, bottom=mon_red, color="#2ca02c",
             label="Elevation 45--50$^\\circ$")
-    axm.bar(x, mon_blu, width=0.62, bottom=mon_red + mon_grn, color="#3b7dd8",
+    axm.bar(x, mon_blu, width=20, bottom=mon_red + mon_grn, color="#3b7dd8",
             label="Elevation $>50^\\circ$")
     for i in range(12):
         if mon_mean[i] > 0:
-            axm.text(i, mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
-                     va="bottom", fontsize=13, color="0.3")
-    axm.set_xticks(x)
-    axm.set_xticklabels(MON, fontsize=24)
+            axm.text(x[i], mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
+                     va="bottom", fontsize=24, color="0.3")
     axm.set_ylabel("Mean visible hours / night", fontsize=28)
     axm.set_xlabel("Month  (number above bar = total visible hours)", fontsize=28)
     axm.tick_params(labelsize=24)
+    axm.tick_params(axis="x", labelbottom=False)  # months shown between panels only
     axm.set_ylim(0, 8.5)
-    axm.legend(fontsize=11, loc="center right")
+    axm.legend(fontsize=28, loc="center right")
     axm.grid(True, axis="y", alpha=0.3)
 
     png2 = os.path.join(PNG_DIR, f"05_visibility_hours_{args.name}_{args.year}.png")
