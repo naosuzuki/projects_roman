@@ -162,7 +162,7 @@ def main():
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "stix"
-    LABEL_FS, TICK_FS, TITLE_FS = 16, 12, 16
+    LABEL_FS, TICK_FS, TITLE_FS = 24, 19, 17
 
     # color by wavelength (blue=short -> red=long)
     wl = np.array([BAND_WL[b] for b in bands], float)
@@ -180,7 +180,7 @@ def main():
     # top: observations per ~month
     nb = max(1, int((alln.max() - alln.min()) / 30))
     axtop.hist(alln, bins=nb, color="0.4")
-    axtop.set_ylabel("obs / month", fontsize=LABEL_FS)
+    axtop.set_ylabel("Obs/Month", fontsize=LABEL_FS)
     axtop.tick_params(labelsize=TICK_FS)
     subtitle = (f"main survey from {args.shift_to}" if shift_days
                 else f"{Time(t0,format='mjd').iso[:7]} to {Time(t1,format='mjd').iso[:7]}")
@@ -193,8 +193,8 @@ def main():
                    colors=colors)
     axev.set_yticks(np.arange(len(bands)))
     axev.set_yticklabels(bands, fontsize=TICK_FS)
-    axev.set_ylabel("band", fontsize=LABEL_FS)
-    axev.set_xlabel("calendar date", fontsize=LABEL_FS)
+    axev.set_ylabel("Band", fontsize=LABEL_FS)
+    axev.set_xlabel("Calendar Date", fontsize=LABEL_FS)
     axev.tick_params(labelsize=TICK_FS)
     axev.grid(True, axis="x", alpha=0.3)
 
@@ -227,13 +227,11 @@ def main():
                 i += 1
         axev.legend(loc="upper right", fontsize=10, framealpha=0.9)
 
-    # mark the (shifted) survey start
+    # mark the (shifted) survey start (dotted line only, no text)
     if shift_days:
         x0 = mdates.date2num(Time(args.shift_to).to_datetime())
         for ax in (axtop, axev):
             ax.axvline(x0, color="k", ls=":", lw=1.3, zorder=3)
-        axev.text(x0, len(bands) - 0.4, f" survey start\n {args.shift_to}",
-                  fontsize=9, va="top", ha="left")
 
     png = os.path.join(PNG_DIR, f"04_obs_calendar_{args.field}{args.label}.png")
     fig.savefig(png, dpi=140)
