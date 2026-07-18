@@ -197,7 +197,7 @@ def main():
     axn.fill_between(dnum, s2, s3, color="b", alpha=0.85,
                      label="Elevation $>50^\\circ$")
     axn.plot(dnum, hrs_dark, color="0.35", lw=1.2, ls="--", label="Astro. dark hours")
-    axn.tick_params(labelsize=24)
+    axn.tick_params(labelsize=24, which="both", direction="in")
     axn.tick_params(axis="x", labelbottom=True)   # month labels between the panels
     axn.legend(fontsize=20, loc="center right")
     axn.grid(True, alpha=0.3)
@@ -220,7 +220,7 @@ def main():
             axm.text(x[i], mon_mean[i] + 0.1, f"{mon_tot[i]:.0f}h", ha="center",
                      va="bottom", fontsize=24, color="0.3")
     axm.set_xlabel("Month (Number above bar = Total Visible hours)", fontsize=28)
-    axm.tick_params(labelsize=24)
+    axm.tick_params(labelsize=24, which="both", direction="in")
     axm.tick_params(axis="x", labelbottom=False)  # months shown between panels only
     axm.set_ylim(0, 9)
     axm.legend(fontsize=20, loc="center right")
