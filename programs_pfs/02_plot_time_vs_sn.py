@@ -103,17 +103,17 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "stix"
     LABEL_FS = 24   # axis label font size
-    TICK_FS = 13    # tick label font size
+    TICK_FS = 24    # tick label font size
     TITLE_FS = 24   # title font size
-    LEGEND_FS = 13  # legend font size
-    VLINE_FS = 13   # vertical-line annotation font size
+    LEGEND_FS = 24  # legend font size
+    VLINE_FS = 24   # vertical-line annotation font size
 
     # bright (lowest mag) -> red, faint (highest mag) -> blue
     mags = sorted(mags)
     cmap = plt.get_cmap(cmap_name)
     colors = cmap(np.linspace(0.0, 1.0, len(mags)))
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(11, 6.5))
     for c, mag in zip(colors, mags):
         t, s = results[mag]
         ax.plot(t, s, "o-", color=c, lw=1.8, ms=5, label=f"{band} = {mag:.1f} AB")
@@ -137,7 +137,9 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
                  fontsize=TITLE_FS, pad=28)
     ax.text(0.5, 1.012, cond, transform=ax.transAxes, fontsize=13.5,
             ha="center", va="bottom", color="0.25")
-    ax.legend(frameon=True, fontsize=LEGEND_FS)
+    ax.legend(frameon=True, fontsize=LEGEND_FS, loc="center left",
+              bbox_to_anchor=(1.01, 0.5), borderpad=0.3, labelspacing=0.35,
+              handlelength=1.4, handletextpad=0.5)
 
     if loglog:
         ax.set_xscale("log")
@@ -172,6 +174,7 @@ def make_plot(results, mags, band, cond, loglog, cmap_name, single_exp, outpath,
         ax.yaxis.set_major_locator(FixedLocator(yticks))
         ax.yaxis.set_minor_locator(NullLocator())
         ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
 
     fig.tight_layout()
     fig.savefig(outpath, dpi=140)
