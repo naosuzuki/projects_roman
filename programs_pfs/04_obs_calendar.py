@@ -228,7 +228,8 @@ def main():
                 first, i = False, j + 1
             else:
                 i += 1
-        axev.legend(loc="upper right", fontsize=18, framealpha=0.9)
+        axev.legend(loc=("lower right" if args.phase_labels else "upper right"),
+                    fontsize=18, framealpha=0.9)
 
     # mark the (shifted) survey start (dotted line only, no text)
     if shift_days:
