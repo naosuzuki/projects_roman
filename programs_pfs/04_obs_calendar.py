@@ -182,10 +182,10 @@ def main():
     axtop.hist(alln, bins=nb, color="0.4")
     axtop.set_ylabel("Obs/Month", fontsize=LABEL_FS)
     axtop.tick_params(labelsize=TICK_FS)
-    subtitle = (f"main survey from {args.shift_to}" if shift_days
+    subtitle = (f"Main Survey from {args.shift_to}" if shift_days
                 else f"{Time(t0,format='mjd').iso[:7]} to {Time(t1,format='mjd').iso[:7]}")
-    axtop.set_title(f"Roman HLTDS observation cadence — {args.field}  ({subtitle})",
-                    fontsize=TITLE_FS)
+    axtop.set_title(f"Roman HLTDS Observation Cadence — {args.field}  ({subtitle})",
+                    fontsize=LABEL_FS)
 
     # bottom: event raster per band
     axev.eventplot([dnum[b] for b in bands],
