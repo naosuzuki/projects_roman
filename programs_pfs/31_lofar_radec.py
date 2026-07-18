@@ -64,11 +64,12 @@ def main():
     ap.add_argument("--flux", choices=["total", "peak"], default="total",
                     help="color by Total_flux or Peak_flux (default total)")
     ap.add_argument("--fmin", type=float, default=0.3,
-                    help="colorbar min flux in mJy (default 0.3)")
-    ap.add_argument("--fmax", type=float, default=100.0,
-                    help="colorbar max flux in mJy (default 100)")
-    ap.add_argument("--msize", type=float, default=4.0,
-                    help="scatter marker size (default 4)")
+                    help="colorbar min flux in mJy (default 0.3, ~1st pctile)")
+    ap.add_argument("--fmax", type=float, default=10.0,
+                    help="colorbar max flux in mJy (default 10, ~95th pctile; "
+                         "brighter sources saturate at red)")
+    ap.add_argument("--msize", type=float, default=12.0,
+                    help="scatter marker size (default 12)")
     ap.add_argument("--alpha", type=float, default=0.7,
                     help="scatter marker opacity (default 0.7)")
     args = ap.parse_args()
@@ -109,13 +110,13 @@ def main():
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman", "Times", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "stix"
-    LABEL_FS, TICK_FS, TITLE_FS = 16, 12, 15
+    LABEL_FS, TICK_FS, TITLE_FS = 28, 24, 28
 
     # brightest sources drawn last so they sit on top
     order = np.argsort(flux)
     ra, dec, cval = ra[order], dec[order], np.clip(flux[order], args.fmin, args.fmax)
 
-    fig, ax = plt.subplots(figsize=(8.5, 7.5), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(13.5, 11.5), constrained_layout=True)
     sc = ax.scatter(ra, dec, c=cval, cmap=args.cmap,
                     norm=LogNorm(vmin=args.fmin, vmax=args.fmax),
                     s=args.msize, alpha=args.alpha, linewidths=0)
@@ -133,7 +134,7 @@ def main():
     cbar.set_label(f"144 MHz {fluxname} Flux  [mJy]", fontsize=LABEL_FS)
     cbar.ax.tick_params(labelsize=TICK_FS)
     fig.suptitle(f"LOFAR LoTSS DR2 Radio Sources — Sky Positions  "
-                 f"(r < {args.radius:g}°, N = {len(ra):,})", fontsize=13)
+                 f"(r < {args.radius:g}°, N = {len(ra):,})", fontsize=28)
 
     png = os.path.join(PNG_DIR, f"{base}{fsuffix}.png")
     fig.savefig(png, dpi=140)
