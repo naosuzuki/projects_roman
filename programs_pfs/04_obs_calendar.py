@@ -218,7 +218,7 @@ def main():
                 j = i
                 while j + 1 < len(mask) and mask[j + 1]:
                     j += 1
-                lbl = (f"Subaru: visible $>{args.vis_hours:g}$ h/night" if first else None)
+                lbl = ("Visibility from Subaru" if first else None)
                 for ax in (axtop, axev):
                     ax.axvspan(ddn[i], ddn[j], color="#2ca02c", alpha=0.13, lw=0,
                                zorder=0, label=(lbl if ax is axev else None))
