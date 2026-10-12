@@ -44,8 +44,8 @@ lacks revtex4-1, so compile on Overleaf.
 | `01_aat_visibility.py` | `05` | EDF-S transit airmass 1.05; 319 nights, 1327 dark h/yr; best Sep–Jan, none in May |
 | `02_aat_success.py` | `01/02` ETC | logistic fit to HSC-AAT success at 2 h: Z-band m50=21.30, w=0.97; depth ∝ 1.25 log10(t/2h). t50 = 1.2/7.3/46 h at Z=21/22/23 |
 | `03_edfs_targets.py` | `03/09` | DEEP disc (63.596,−47.599; r 1.42°; 11,346 SNe; z_med 1.42) + WIDE (58.915,−49.317; r 1.81°; 7,303; z_med 1.17). Peak Z<22/23/24: 337/1454/5027 |
-| `04_2df_pointings.py` | `06` | 2dF R=1.05°: DEEP 4 + WIDE 5 = 9 fields, 100% coverage, 1.9 fields/SN |
-| `05_aat_host_yield.py` | `07/24/25` | 9,230 hosts Z<24; 1-h visits, 360 fibers, retire 20 h: 3,230/4,050/4,650 secure at 90/180/360 h (51% of targets, 25% of all SNe; 5% at z>1.5) |
+| `04_2df_pointings.py` | `06` | 2dF R=1.05°: DEEP 4 + WIDE 5 = 9 fields. **Tight** layout (default `--cover-min 0.99`): max overlap subject to ≥99% coverage → 99.1% covered, 2.15 fields/SN, blank sky 1.9%/2.5% (vs 12% for the 100%-coverage layout) |
+| `05_aat_host_yield.py` | `07/24/25` | 9,230 hosts Z<24; 1-h visits, 360 fibers, retire 20 h: 3,210/4,020/4,590 secure at 90/180/360 h, final 4,623 (50% of targets, 25% of all SNe; 5% at z>1.5). Fiber-limited, so tight vs 100%-coverage layout differ by only 1% |
 
 Not yet done (need EDF-S light curves): obs calendar (`04`), Phase II live-SN
 fiber budget with time windows (`07`), CC SNe/hosts.
