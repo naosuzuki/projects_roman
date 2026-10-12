@@ -8,8 +8,10 @@ Phase II (live SNe) and Phase III (hosts).
 Paper: `~/github/papers/26_roman_aat_study/ms.tex` (Overleaf, branch **main**,
 a copy of the Subaru paper being converted section by section; HSC section
 removed; text below the new visibility section is still the PFS/ELAIS-N1
-template with PFS→AAT, ELAIS-N1→EDF-S substituted — **numbers are ELAIS-N1's
-until each section is redone**).
+template). Sections now: Intro → AAT visibility → AAT success model → EDF-S
+targets → 2dF pointings → host campaign → Summary. The old PFS/ELAIS-N1
+sections sit in a `\begin{comment}` block at the end for reference. Local TeX
+lacks revtex4-1, so compile on Overleaf.
 
 ## Field / site / instrument
 
@@ -22,24 +24,30 @@ until each section is redone**).
   is an AAT redshift-efficiency vs mag table used in the old white paper.
 - ELAIS-N1 is invisible from the AAT (max elevation 4°).
 
-## Data
+## Data (all local — no external disk used)
 
-- Committed: `../programs_pfs/outputs/csv/03_snia_radec.csv` (field, SNID, RA,
-  Dec, z_cmb, peakmag_Z) — includes EDF-S. **peakmag_Z = −9 is a sentinel**
-  (no Z data) — exclude before applying magnitude cuts.
-- Light curves, hosts, CC/TDE need the HOURGLASS2 FITS on
-  `/Volumes/exdisk1/data/Roman/ltcv_sim/EDF-S/` (`.FITS.gz`).
+- `../programs_pfs/outputs/csv/03_snia_radec.csv` (field, SNID, RA, Dec, z_cmb,
+  peakmag_Z) — includes the 18,649 EDF-S SNe Ia. **peakmag_Z = −9 is a sentinel**
+  (no Z peak; 2011 SNe) — treated as faint.
+- EDF-S has **no host mags / light curves / CC** locally. Host Z087 is assigned
+  by drawing an ELAIS-N1 SN Ia host at the same z (|dz|<0.05) from
+  `03_snia_host_radec_ELAIS-N1.csv` (same HOURGLASS2 Ia model; hostless carried
+  over). Replace with real EDF-S hosts if the FITS
+  (`/Volumes/exdisk1/data/Roman/ltcv_sim/EDF-S/`) become available.
+- AAT success calibration: `~/github/projects_hsc/specz/csvfiles_aat/{g,r,i,z,y}_magfraction.csv`
+  (HSC-AAT host campaign, paper `~/github/papers/24_hscsnhost_aat` Fig. 2).
 
-## Script map (PFS → AAT)
+## Scripts
 
-| AAT | PFS source | Status |
+| AAT | PFS analog | Result |
 |---|---|---|
-| `01_aat_visibility.py` | `05_visibility.py` | done: 319 nights, 1327 h/yr, best Sep–Jan, transit airmass 1.05 |
-| `02_aat_etc.py` | `01/02` (PFS ETC) | todo — AAOmega S/N model (no official ETC wrapper) |
-| `03_snia_radec.py` | `03` | todo |
-| `04_obs_calendar.py` | `04` | todo — EDF-S cadence, AAT season Jul–Mar |
-| `05_2df_pointings.py` | `06` | todo — 2° circular FoV tiling |
-| `06_fiber_budget.py` | `07` | todo — 392 fibers; needs EDF-S light curves |
-| later | `09–32` | z-histograms, spec-z yields, remaining hosts, configs, cases |
+| `01_aat_visibility.py` | `05` | EDF-S transit airmass 1.05; 319 nights, 1327 dark h/yr; best Sep–Jan, none in May |
+| `02_aat_success.py` | `01/02` ETC | logistic fit to HSC-AAT success at 2 h: Z-band m50=21.30, w=0.97; depth ∝ 1.25 log10(t/2h). t50 = 1.2/7.3/46 h at Z=21/22/23 |
+| `03_edfs_targets.py` | `03/09` | DEEP disc (63.596,−47.599; r 1.42°; 11,346 SNe; z_med 1.42) + WIDE (58.915,−49.317; r 1.81°; 7,303; z_med 1.17). Peak Z<22/23/24: 337/1454/5027 |
+| `04_2df_pointings.py` | `06` | 2dF R=1.05°: DEEP 4 + WIDE 5 = 9 fields, 100% coverage, 1.9 fields/SN |
+| `05_aat_host_yield.py` | `07/24/25` | 9,230 hosts Z<24; 1-h visits, 360 fibers, retire 20 h: 3,230/4,050/4,650 secure at 90/180/360 h (51% of targets, 25% of all SNe; 5% at z>1.5) |
+
+Not yet done (need EDF-S light curves): obs calendar (`04`), Phase II live-SN
+fiber budget with time windows (`07`), CC SNe/hosts.
 
 Style: match `../programs_pfs` (Times New Roman, capitalized labels, rainbow_r).
